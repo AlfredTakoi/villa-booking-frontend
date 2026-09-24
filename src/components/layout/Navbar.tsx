@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Calendar, Phone, Menu, X, Compass } from 'lucide-react';
 import OnlineBookingModal from '@/components/booking/OnlineBookingModal';
 import { useVilla } from '@/context/VillaContext';
+import { resolveMediaUrl } from '@/lib/utils/api';
 
 export default function Navbar() {
   const { villa } = useVilla();
@@ -59,7 +60,7 @@ export default function Navbar() {
           <Link href="/" className="group flex items-center gap-3 text-white text-decoration-none">
             <div className="w-11 h-11 shadow-md flex items-center justify-center overflow-hidden bg-transparent transition-all">
               <img
-                src={villa.logo_url || '/villa-logo.png'}
+                src={resolveMediaUrl(villa.logo_url)}
                 alt={villa.system_title || villa.name || 'Villa Casa Anandefa'}
                 className="w-full h-full object-cover transition-transform duration-300"
               />

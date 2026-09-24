@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { resolveMediaUrl, buildApiUrl } from '@/lib/utils/api';
 
 export interface VillaProfileData {
   id: number;
@@ -124,11 +125,11 @@ const defaultVilla: VillaProfileData = {
   cover_image_url: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1920&q=80',
   policies: '- Waktu Check-in: 14:00 WIB | Waktu Check-out: 12:00 WIB.\n- Tamu wajib menjaga ketenangan lingkungan setelah pukul 22:00 WIB.\n- Dilarang merokok di dalam ruangan kamar tidur (tersedia area merokok di area outdoor).\n- Kapasitas maksimal villa adalah 20 orang.\n- Hewan peliharaan tidak diperkenankan kecuali dengan izin khusus pihak manajemen.',
   allow_guest_selection: true,
-  logo_url: '/villa-logo.png?v=20260923',
+  logo_url: resolveMediaUrl('/villa-logo.png?v=20260923'),
   system_title: 'Casa Anandefa',
   meta_title: 'Casa Anandefa | Sewa Villa Puncak Bogor',
   meta_description: 'Villa Casa Anandefa - sewa penginapan kawasan Puncak Bogor dengan panorama alam memukau, kolam renang pribadi, fasilitas lengkap, dan akses mudah dekat Taman Safari.',
-  favicon_url: '/favicon.png?v=20260923',
+  favicon_url: resolveMediaUrl('/favicon.png?v=20260923'),
   frontend_footer_text: '© 2026 Villa Casa Anandefa. All rights reserved.',
   booking_instructions:
     'Pembayaran DP sebesar Rp 1.000.000 / malam untuk mengunci tanggal menginap.\nSetelah DP diterima, tanggal langsung kami booked dan invoice resmi dikirimkan paling lambat 1 x 24 jam.\nPembatalan tidak dapat dilakukan (non-refundable), namun boleh reschedule maksimal 1x (diinformasikan maksimal 10 hari sebelumnya / H-10).\nBantuan & info ketersediaan: 0813-8266-7801 / 0816-4819-298.',
@@ -195,18 +196,19 @@ export function VillaProvider({ children }: { children: ReactNode }) {
 
   const fetchVillaData = async () => {
     try {
-      const res = await fetch('/api/villa');
+      const res = await fetch(buildApiUrl('/api/villa'));
       const json = await res.json();
       if (json.success && json.data) {
         if (json.data.villa) {
           setVilla({
             ...defaultVilla,
             ...json.data.villa,
-            logo_url: json.data.logo_url || json.data.villa.logo_url || defaultVilla.logo_url,
+            logo_url: resolveMediaUrl(json.data.logo_url || json.data.villa.logo_url, defaultVilla.logo_url),
+            cover_image_url: resolveMediaUrl(json.data.villa.cover_image_url, defaultVilla.cover_image_url),
             system_title: json.data.system_title || json.data.villa.system_title || defaultVilla.system_title,
             meta_title: json.data.meta_title || json.data.villa.meta_title || defaultVilla.meta_title,
             meta_description: json.data.meta_description || json.data.villa.meta_description || defaultVilla.meta_description,
-            favicon_url: json.data.favicon_url || json.data.villa.favicon_url || defaultVilla.favicon_url,
+            favicon_url: resolveMediaUrl(json.data.favicon_url || json.data.villa.favicon_url, defaultVilla.favicon_url),
             base_price: Number(json.data.villa.base_price || defaultVilla.base_price),
             max_guests: Number(json.data.villa.max_guests || defaultVilla.max_guests),
             bedrooms: Number(json.data.villa.bedrooms || defaultVilla.bedrooms),
@@ -227,7 +229,7 @@ export function VillaProvider({ children }: { children: ReactNode }) {
           setImages(
             json.data.images.map((img: any) => ({
               id: img.id,
-              url: img.image_url || img.url,
+              url: resolveMediaUrl(img.image_url || img.url),
               caption: img.caption,
               category: img.category,
             }))

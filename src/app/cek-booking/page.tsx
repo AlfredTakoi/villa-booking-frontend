@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import WhatsAppButton from '@/components/layout/WhatsAppButton';
 import CustomDatePicker from '@/components/ui/CustomDatePicker';
+import { buildApiUrl } from '@/lib/utils/api';
 import {
   Search,
   CheckCircle2,
@@ -52,7 +53,7 @@ export default function CheckBookingPage() {
       try {
         const today = new Date();
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-        const res = await fetch(`/api/villa/availability?start_date=${startOfMonth}`);
+        const res = await fetch(buildApiUrl(`/api/villa/availability?start_date=${startOfMonth}`));
         const data = await res.json();
         if (isMounted && data.success && data.data?.daily_rates) {
           setDailyRates(data.data.daily_rates);
@@ -160,7 +161,7 @@ export default function CheckBookingPage() {
     setRescheduleSuccess('');
 
     try {
-      const res = await fetch('/api/bookings/reschedule', {
+      const res = await fetch(buildApiUrl('/api/bookings/reschedule'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -208,7 +209,7 @@ export default function CheckBookingPage() {
     setResult(null);
 
     try {
-      const url = `/api/booking-status?code=${encodeURIComponent(bookingCode.trim())}${phone ? `&phone=${encodeURIComponent(phone.trim())}` : ''}`;
+      const url = buildApiUrl(`/api/booking-status?code=${encodeURIComponent(bookingCode.trim())}${phone ? `&phone=${encodeURIComponent(phone.trim())}` : ''}`);
       const res = await fetch(url);
       const data = await res.json();
 

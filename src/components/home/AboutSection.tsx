@@ -3,6 +3,7 @@
 import React from 'react';
 import { Bed, Bath, Users, Maximize2, ShieldCheck, ArrowUpRight } from 'lucide-react';
 import { useVilla } from '@/context/VillaContext';
+import { resolveMediaUrl } from '@/lib/utils/api';
 
 export default function AboutSection() {
   const { villa, images } = useVilla();
@@ -29,7 +30,7 @@ export default function AboutSection() {
           <div className="lg:col-span-6 relative">
             <div className="relative z-10 rounded-3xl overflow-hidden shadow-luxury border-4 border-white">
               <img
-                src={villa.cover_image_url || "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=80"}
+                src={resolveMediaUrl(villa.cover_image_url, "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=80")}
                 alt={`${villa.name || 'Villa Casa Anandefa'} Open Living Space`}
                 className="w-full h-[440px] object-cover hover:scale-105 transition-transform duration-700"
               />
@@ -37,7 +38,7 @@ export default function AboutSection() {
             {/* Small floating secondary image */}
             <div className="hidden sm:block absolute -bottom-8 -right-6 z-20 w-64 h-52 rounded-2xl overflow-hidden shadow-luxury-lg border-4 border-white">
               <img
-                src={secondaryImage}
+                src={resolveMediaUrl(secondaryImage)}
                 alt={`${villa.name || 'Villa Casa Anandefa'} Suite View`}
                 className="w-full h-full object-cover"
               />

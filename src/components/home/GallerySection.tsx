@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Maximize2, X } from 'lucide-react';
 import { useVilla } from '@/context/VillaContext';
+import { resolveMediaUrl } from '@/lib/utils/api';
 
 interface ImageItem {
   url: string;
@@ -163,7 +164,7 @@ export default function GallerySection({ images }: { images?: ImageItem[] }) {
               className="group relative h-80 rounded-3xl overflow-hidden cursor-pointer shadow-sm hover:shadow-luxury transition-all duration-500 bg-sand-200"
             >
               <img
-                src={img.url}
+                src={resolveMediaUrl(img.url)}
                 alt={img.caption}
                 className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700"
               />
@@ -206,7 +207,7 @@ export default function GallerySection({ images }: { images?: ImageItem[] }) {
               <X className="w-6 h-6" />
             </button>
             <img
-              src={activeImage.url}
+              src={resolveMediaUrl(activeImage.url)}
               alt={activeImage.caption}
               className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl"
             />

@@ -7,6 +7,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import WhatsAppButton from '@/components/layout/WhatsAppButton';
 import OnlineBookingModal from '@/components/booking/OnlineBookingModal';
+import { buildApiUrl, resolveMediaUrl } from '@/lib/utils/api';
 import {
   Copy,
   Check,
@@ -60,16 +61,7 @@ function BookingPaymentContent() {
   // Helper url bukti
   const resolveProofUrl = (url?: string | null) => {
     if (!url) return null;
-    const trimmed = url.trim();
-    if (
-      trimmed.startsWith('blob:') ||
-      trimmed.startsWith('data:') ||
-      trimmed.startsWith('http://') ||
-      trimmed.startsWith('https://')
-    ) {
-      return trimmed;
-    }
-    return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return resolveMediaUrl(url);
   };
 
   // Ambil detail reservasi ketika code tersedia
@@ -86,8 +78,8 @@ function BookingPaymentContent() {
 
       try {
         const [resStatus, resVilla] = await Promise.all([
-          fetch(`/api/booking-status?code=${encodeURIComponent(code)}`),
-          fetch(`/api/villa`),
+          fetch(buildApiUrl(`/api/booking-status?code=${encodeURIComponent(code)}`)),
+          fetch(buildApiUrl('/api/villa')),
         ]);
 
         const dataStatus = await resStatus.json();
@@ -174,7 +166,7 @@ function BookingPaymentContent() {
       formData.append('transferred_amount', transferredAmount);
       formData.append('proof_image', proofFile);
 
-      const res = await fetch('/api/bookings/upload-proof', {
+      const res = await fetch(buildApiUrl('/api/bookings/upload-proof'), {
         method: 'POST',
         body: formData,
       });

@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import WhatsAppButton from '@/components/layout/WhatsAppButton';
 import { useVilla } from '@/context/VillaContext';
+import { buildApiUrl } from '@/lib/utils/api';
 import {
   ShieldCheck,
   ArrowLeft,
@@ -21,7 +22,7 @@ export default function TataTertibPage() {
   useEffect(() => {
     async function fetchTerms() {
       try {
-        const res = await fetch('/api/villa');
+        const res = await fetch(buildApiUrl('/api/villa'));
         const data = await res.json();
         if (data.success && data.data?.terms_conditions) {
           setTermsHtml(data.data.terms_conditions);

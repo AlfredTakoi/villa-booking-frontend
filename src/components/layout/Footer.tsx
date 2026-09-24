@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { MapPin, Phone, Mail, ShieldCheck } from 'lucide-react';
 import { useVilla } from '@/context/VillaContext';
+import { resolveMediaUrl } from '@/lib/utils/api';
 
 export default function Footer() {
   const { villa, socialLinks } = useVilla();
@@ -21,7 +22,7 @@ export default function Footer() {
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
                 <img
-                  src={villa.logo_url || '/villa-logo.png'}
+                  src={resolveMediaUrl(villa.logo_url)}
                   alt={villa.system_title || villa.name || 'Casa Anandefa'}
                   className="w-full h-full object-contain"
                 />

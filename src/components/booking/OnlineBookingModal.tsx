@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useVilla } from '@/context/VillaContext';
 import CustomSelect from '@/components/ui/CustomSelect';
+import { buildApiUrl } from '@/lib/utils/api';
 
 function formatRupiah(amount: number | string): string {
   const num = Math.round(Number(amount) || 0);
@@ -415,7 +416,7 @@ export default function OnlineBookingModal({
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/bookings', {
+      const res = await fetch(buildApiUrl('/api/bookings'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

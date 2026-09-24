@@ -6,6 +6,7 @@ import { Star, ArrowRight, Users, AlertCircle } from 'lucide-react';
 import { useVilla } from '@/context/VillaContext';
 import CustomDatePicker from '@/components/ui/CustomDatePicker';
 import CustomSelect from '@/components/ui/CustomSelect';
+import { buildApiUrl, resolveMediaUrl } from '@/lib/utils/api';
 
 export default function HeroSection() {
   const router = useRouter();
@@ -47,7 +48,7 @@ export default function HeroSection() {
       try {
         const todayObj = new Date();
         const startOfMonth = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-01`;
-        const res = await fetch(`/api/villa/availability?start_date=${startOfMonth}`);
+        const res = await fetch(buildApiUrl(`/api/villa/availability?start_date=${startOfMonth}`));
         const result = await res.json();
         if (isMounted && result.success && result.data?.daily_rates) {
           setDailyRates(result.data.daily_rates);
@@ -142,7 +143,7 @@ export default function HeroSection() {
       {/* Background Image with Cinematic Overlay */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <img
-          src={villa.cover_image_url || "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=2000&q=85"}
+          src={resolveMediaUrl(villa.cover_image_url, "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=2000&q=85")}
           alt={`${villa.name || 'Villa Casa Anandefa'} Infinity Pool at Dusk`}
           className="w-full h-full object-cover object-center scale-105 animate-fade-in"
         />
