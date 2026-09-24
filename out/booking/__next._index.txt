@@ -1,0 +1,7 @@
+1:"$Sreact.fragment"
+2:I[72632,["/villa/_next/static/chunks/0inhwev5pvryh.js","/villa/_next/static/chunks/0d3shmwh5_nmn.js"],"VillaProvider"]
+3:I[39756,["/villa/_next/static/chunks/0inhwev5pvryh.js","/villa/_next/static/chunks/0d3shmwh5_nmn.js"],"default"]
+4:I[37457,["/villa/_next/static/chunks/0inhwev5pvryh.js","/villa/_next/static/chunks/0d3shmwh5_nmn.js"],"default"]
+5:I[29306,["/villa/_next/static/chunks/0inhwev5pvryh.js","/villa/_next/static/chunks/0d3shmwh5_nmn.js","/villa/_next/static/chunks/03dh585a_tql0.js"],"default"]
+:HL["/villa/_next/static/chunks/16.43hiupzz.q.css","style"]
+0:{"rsc":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/villa/_next/static/chunks/16.43hiupzz.q.css","precedence":"next"}],["$","script","script-0",{"src":"/villa/_next/static/chunks/0inhwev5pvryh.js","async":true}],["$","script","script-1",{"src":"/villa/_next/static/chunks/0d3shmwh5_nmn.js","async":true}]],["$","html",null,{"lang":"id","className":"playfair_display_fed1534a-module__F9WnGq__variable outfit_9f4f9187-module__4LtYgq__variable","suppressHydrationWarning":true,"children":["$","body",null,{"className":"font-sans antialiased bg-sand-50 text-charcoal-900","suppressHydrationWarning":true,"children":["$","$L2",null,{"children":["$","$L3",null,{"parallelRouterKey":"children","template":["$","$L4",null,{}],"notFound":[["$","$L5",null,{}],[]]}]}]}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"uuI_GuH7SB-lKbkMXbP5Z"}

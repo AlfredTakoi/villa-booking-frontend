@@ -482,7 +482,7 @@ export default function CheckBookingPage() {
 
                 {result.status === 'pending_payment' && (
                   <Link
-                    href={`/booking/${result.booking_code}`}
+                    href={`/booking?code=${result.booking_code}`}
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-gold-500 to-gold-600 text-charcoal-950 px-6 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
                   >
                     <span>Lanjut ke Instruksi Pembayaran & Upload Bukti</span>
@@ -492,7 +492,7 @@ export default function CheckBookingPage() {
 
                 {result.status === 'waiting_confirmation' && (
                   <Link
-                    href={`/booking/${result.booking_code}`}
+                    href={`/booking?code=${result.booking_code}`}
                     className="inline-flex items-center gap-2 bg-amber-500 text-white px-6 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
                   >
                     <span>Lihat Bukti Transfer yang Telah Diunggah</span>

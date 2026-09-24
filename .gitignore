@@ -15,7 +15,7 @@
 
 # next.js
 /.next/
-/out/
+# /out/ (tracked for cPanel static deployment)
 
 # production
 /build
@@ -43,3 +43,7 @@ next-env.d.ts
 # docker
 docker-compose.yml
 Dockerfile
+
+# temporary build artifacts
+frontend-build.zip
+src/api_backup/

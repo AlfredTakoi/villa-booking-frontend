@@ -1,0 +1,24 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /villa/
+
+    # 1. Forward /villa/api/* and /villa/uploads/* to backend /villa-admin/
+    RewriteRule ^api/(.*)$ /villa-admin/api/$1 [L,QSA]
+    RewriteRule ^uploads/(.*)$ /villa-admin/uploads/$1 [L,QSA]
+
+    # 2. Redirect without trailing slash to with trailing slash for directories
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteCond %{REQUEST_URI} !(.*)/$
+    RewriteRule ^(.*)$ $1/ [L,R=301]
+
+    # 3. Support clean URLs if file.html exists
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}.html -f
+    RewriteRule ^(.*)$ $1.html [L]
+
+    # 4. 404 Error Document
+    ErrorDocument 404 /villa/404.html
+</IfModule>

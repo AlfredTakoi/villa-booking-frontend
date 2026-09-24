@@ -440,7 +440,7 @@ export default function OnlineBookingModal({
 
       if (result.success && result.data?.booking_code) {
         triggerClose();
-        router.push(`/booking/${result.data.booking_code}`);
+        router.push(`/booking?code=${result.data.booking_code}`);
       } else {
         setAlertMessage(result.message || 'Gagal memproses reservasi. Silakan periksa kembali data Anda.');
       }

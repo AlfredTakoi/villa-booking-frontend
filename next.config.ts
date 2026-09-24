@@ -1,17 +1,21 @@
 import type { NextConfig } from "next";
 
+const isExport = process.env.NEXT_EXPORT === 'true';
 const backendBaseUrl = (
   process.env.SIPKK_BACKEND_BASE_URL ||
-  'http://localhost/booking-app'
-).replace(/\/+$/, '')
+  'https://alfredtakoi.net/villa-admin'
+).replace(/\/+$/, '');
 
 const nextConfig: NextConfig = {
+  ...(isExport ? { output: 'export' } : {}),
   basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  trailingSlash: true,
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'images.unsplash.com',
+        hostname: '**',
       },
       {
         protocol: 'http',
@@ -20,6 +24,9 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
+    if (isExport) {
+      return [];
+    }
     return {
       fallback: [
         // Semua /api/* diteruskan ke backend Yii2 di Laragon
@@ -37,8 +44,9 @@ const nextConfig: NextConfig = {
           destination: `${backendBaseUrl}/uploads/:path*`,
         },
       ],
-    }
+    };
   },
 };
 
 export default nextConfig;
+
