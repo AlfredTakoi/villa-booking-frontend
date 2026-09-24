@@ -1,0 +1,8 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/alfredta/public_html/villa/
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/cp -R * $DEPLOYPATH
+    - /bin/cp -a .htaccess $DEPLOYPATH
+    - /bin/echo "Deployed to $DEPLOYPATH successfully"
