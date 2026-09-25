@@ -70,6 +70,11 @@ export default function OnlineBookingModal({
   const [shouldRender, setShouldRender] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // Mobile Tab State ('calendar' | 'form') to guarantee calendar is never covered on mobile
+  const [mobileTab, setMobileTab] = useState<'calendar' | 'form'>(
+    initialCheckIn && initialCheckOut ? 'form' : 'calendar'
+  );
+
   // Selected state
   const [checkIn, setCheckIn] = useState<string | null>(initialCheckIn || null);
   const [checkOut, setCheckOut] = useState<string | null>(initialCheckOut || null);
@@ -105,6 +110,11 @@ export default function OnlineBookingModal({
     if (isOpen) {
       if (initialCheckIn) setCheckIn(initialCheckIn);
       if (initialCheckOut) setCheckOut(initialCheckOut);
+      if (initialCheckIn && initialCheckOut) {
+        setMobileTab('form');
+      } else {
+        setMobileTab('calendar');
+      }
       if (initialGuests) {
         const gNum = Math.min(maxGuests, Math.max(1, Number(initialGuests) || 2));
         setAdults(gNum);
@@ -464,93 +474,131 @@ export default function OnlineBookingModal({
     >
       {/* Outer Modal Box with Scale & Fade Animation */}
       <div
-        className={`relative w-full max-w-7xl 2xl:max-w-[1420px] max-h-[94vh] lg:h-[90vh] lg:max-h-[850px] bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-white/20 flex flex-col lg:flex-row my-auto transition-all duration-300 ease-out transform ${
+        className={`relative w-full max-w-7xl 2xl:max-w-[1420px] h-[92vh] max-h-[94vh] lg:h-[90vh] lg:max-h-[850px] bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-white/20 flex flex-col lg:flex-row my-auto transition-all duration-300 ease-out transform ${
           isAnimating ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* ================= MOBILE NAVIGATION TABS (Visible only on < lg) ================= */}
+        <div className="lg:hidden flex items-center justify-between px-3 sm:px-4 py-2.5 bg-charcoal-950 border-b border-white/10 z-30 flex-shrink-0">
+          <div className="flex items-center gap-1.5 bg-white/10 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setMobileTab('calendar')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                mobileTab === 'calendar'
+                  ? 'bg-gold-500 text-charcoal-950 font-bold shadow-sm'
+                  : 'text-white/70 hover:text-white'
+              }`}
+            >
+              <CalendarIcon className="w-3.5 h-3.5" />
+              <span>1. Kalender</span>
+              {checkIn && checkOut && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileTab('form')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                mobileTab === 'form'
+                  ? 'bg-gold-500 text-charcoal-950 font-bold shadow-sm'
+                  : 'text-white/70 hover:text-white'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>2. Kontak &amp; Rincian</span>
+              {calculationSummary && (
+                <span className="text-[10px] font-mono font-bold bg-white/20 text-white px-1.5 py-0.5 rounded-full">
+                  {calculationSummary.nights}M
+                </span>
+              )}
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={triggerClose}
+            className="text-white/60 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
+            aria-label="Tutup popup"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
         {/* ================= LEFT SECTION: DUA BULAN KALENDER ================= */}
-        <div className="flex-1 p-4 sm:p-6 lg:p-6 xl:p-8 bg-white text-charcoal-900 flex flex-col justify-between overflow-y-auto lg:overflow-hidden h-full">
-          <div>
-            {/* Header Title (Bahasa Indonesia) */}
-            <div className="text-center mb-3 sm:mb-4">
-              <span className="text-[10px] sm:text-[11px] tracking-[0.25em] text-gold-600 uppercase font-sans font-bold block mb-0.5">
-                Villa Casa Anandefa &bull; Puncak Bogor
-              </span>
-              <h2 className="font-serif text-xl sm:text-2xl lg:text-3xl tracking-[0.18em] font-semibold text-charcoal-900 uppercase">
-                RESERVASI ONLINE
-              </h2>
-              <div className="w-14 sm:w-16 h-0.5 bg-gold-400 mx-auto mt-1.5"></div>
-            </div>
-
-            {/* Alert banner if error or validation */}
-            {alertMessage && (
-              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs flex items-center gap-2 animate-fade-in">
-                <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                <span className="font-medium">{alertMessage}</span>
+        <div
+          className={`flex-1 bg-white text-charcoal-900 flex-col justify-between h-full relative overflow-hidden ${
+            mobileTab === 'calendar' ? 'flex' : 'hidden lg:flex'
+          }`}
+        >
+          {/* Scrollable calendar content */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-3.5 sm:p-6 lg:p-6 xl:p-8 flex flex-col justify-between">
+            <div>
+              {/* Header Title (Bahasa Indonesia) */}
+              <div className="text-center mb-3 sm:mb-4">
+                <span className="text-[10px] sm:text-[11px] tracking-[0.25em] text-gold-600 uppercase font-sans font-bold block mb-0.5">
+                  Villa Casa Anandefa &bull; Puncak Bogor
+                </span>
+                <h2 className="font-serif text-xl sm:text-2xl lg:text-3xl tracking-[0.18em] font-semibold text-charcoal-900 uppercase">
+                  RESERVASI ONLINE
+                </h2>
+                <div className="w-14 sm:w-16 h-0.5 bg-gold-400 mx-auto mt-1.5"></div>
               </div>
-            )}
 
-            {/* Month Navigation Controls & Months Display */}
-            <div className="relative">
-              {/* Previous Month Button */}
-              <button
-                type="button"
-                onClick={() => setMonthOffset((prev) => Math.max(0, prev - 1))}
-                disabled={monthOffset === 0}
-                className={`absolute -top-1 left-0 p-2 rounded-full border transition-all z-10 ${
-                  monthOffset === 0
-                    ? 'text-gray-300 border-gray-200 cursor-not-allowed'
-                    : 'text-charcoal-800 border-gray-300 hover:bg-gold-50 hover:border-gold-500'
-                }`}
-                aria-label="Bulan Sebelumnya"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-
-              {/* Next Month Button */}
-              <button
-                type="button"
-                onClick={() => setMonthOffset((prev) => Math.min(11, prev + 1))}
-                disabled={monthOffset >= 11}
-                className="absolute -top-1 right-0 p-2 rounded-full border border-gray-300 text-charcoal-800 hover:bg-gold-50 hover:border-gold-500 transition-all z-10"
-                aria-label="Bulan Berikutnya"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-
-              {/* Calendars Grid with Loading State */}
-              {isLoadingRates ? (
-                <div className="py-20 text-center flex flex-col items-center justify-center space-y-3 bg-gray-50/50 rounded-2xl border border-gray-100 my-2">
-                  <div className="w-10 h-10 border-3 border-gold-500 border-t-transparent rounded-full animate-spin" />
-                  <div>
-                    <span className="text-xs font-bold text-charcoal-900 tracking-wider uppercase block">
-                      Memuat Ketersediaan &amp; Tarif Kalender...
-                    </span>
-                    <span className="text-[11px] text-gray-500 font-light mt-0.5 block">
-                      Mohon tunggu sebentar, sistem sedang sinkronisasi tanggal
-                    </span>
-                  </div>
+              {/* Alert banner if error or validation */}
+              {alertMessage && (
+                <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs flex items-center gap-2 animate-fade-in">
+                  <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span className="font-medium">{alertMessage}</span>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 pt-1">
-                  {/* Bulan 1 */}
-                  <MonthBlock
-                    grid={gridMonth1}
-                    todayStr={todayStr}
-                    checkIn={checkIn}
-                    checkOut={checkOut}
-                    hoverDate={hoverDate}
-                    dailyRates={dailyRates}
-                    basePrice={basePrice}
-                    onDateClick={handleDateClick}
-                    onDateHover={setHoverDate}
-                  />
+              )}
 
-                  {/* Bulan 2 */}
-                  <div className="hidden md:block">
+              {/* Month Navigation Controls & Months Display */}
+              <div className="relative">
+                {/* Previous Month Button */}
+                <button
+                  type="button"
+                  onClick={() => setMonthOffset((prev) => Math.max(0, prev - 1))}
+                  disabled={monthOffset === 0}
+                  className={`absolute -top-1 left-0 p-2 rounded-full border transition-all z-10 ${
+                    monthOffset === 0
+                      ? 'text-gray-300 border-gray-200 cursor-not-allowed'
+                      : 'text-charcoal-800 border-gray-300 hover:bg-gold-50 hover:border-gold-500'
+                  }`}
+                  aria-label="Bulan Sebelumnya"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                {/* Next Month Button */}
+                <button
+                  type="button"
+                  onClick={() => setMonthOffset((prev) => Math.min(11, prev + 1))}
+                  disabled={monthOffset >= 11}
+                  className="absolute -top-1 right-0 p-2 rounded-full border border-gray-300 text-charcoal-800 hover:bg-gold-50 hover:border-gold-500 transition-all z-10"
+                  aria-label="Bulan Berikutnya"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+
+                {/* Calendars Grid with Loading State */}
+                {isLoadingRates ? (
+                  <div className="py-20 text-center flex flex-col items-center justify-center space-y-3 bg-gray-50/50 rounded-2xl border border-gray-100 my-2">
+                    <div className="w-10 h-10 border-3 border-gold-500 border-t-transparent rounded-full animate-spin" />
+                    <div>
+                      <span className="text-xs font-bold text-charcoal-900 tracking-wider uppercase block">
+                        Memuat Ketersediaan &amp; Tarif Kalender...
+                      </span>
+                      <span className="text-[11px] text-gray-500 font-light mt-0.5 block">
+                        Mohon tunggu sebentar, sistem sedang sinkronisasi tanggal
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 pt-1">
+                    {/* Bulan 1 */}
                     <MonthBlock
-                      grid={gridMonth2}
+                      grid={gridMonth1}
                       todayStr={todayStr}
                       checkIn={checkIn}
                       checkOut={checkOut}
@@ -560,31 +608,82 @@ export default function OnlineBookingModal({
                       onDateClick={handleDateClick}
                       onDateHover={setHoverDate}
                     />
+
+                    {/* Bulan 2 */}
+                    <div className="hidden md:block">
+                      <MonthBlock
+                        grid={gridMonth2}
+                        todayStr={todayStr}
+                        checkIn={checkIn}
+                        checkOut={checkOut}
+                        hoverDate={hoverDate}
+                        dailyRates={dailyRates}
+                        basePrice={basePrice}
+                        onDateClick={handleDateClick}
+                        onDateHover={setHoverDate}
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Legend (Bahasa Indonesia) */}
+            <div className="mt-3 sm:mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-gray-600 flex-shrink-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-emerald-600 font-bold text-sm">▼</span>
+                <span className="font-medium">Tarif Terbaik</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>
+                <span className="font-medium">Kamar Terisi / Diblokir</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-gray-500">
+                <span className="font-mono font-bold text-gray-400">///</span>
+                <span>Minimal Menginap: 1 Malam</span>
+              </div>
             </div>
           </div>
 
-          {/* Bottom Legend (Bahasa Indonesia) */}
-          <div className="mt-3 sm:mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-gray-600 flex-shrink-0">
-            <div className="flex items-center gap-1.5">
-              <span className="text-emerald-600 font-bold text-sm">▼</span>
-              <span className="font-medium">Tarif Terbaik</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>
-              <span className="font-medium">Kamar Terisi / Diblokir</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-gray-500">
-              <span className="font-mono font-bold text-gray-400">///</span>
-              <span>Minimal Menginap: 1 Malam</span>
-            </div>
+          {/* Sticky Mobile Prompt / Action Bar when on Calendar Tab */}
+          <div className="lg:hidden p-3 bg-white border-t border-gray-200 flex-shrink-0 z-20 shadow-lg">
+            {checkIn && checkOut ? (
+              <div className="p-3 bg-charcoal-950 text-white rounded-xl flex items-center justify-between gap-3 shadow-lg border border-gold-500/40">
+                <div className="min-w-0">
+                  <div className="text-[10px] text-gold-400 font-bold uppercase tracking-wider">
+                    {formatDisplayDate(checkIn)} &ndash; {formatDisplayDate(checkOut)}
+                  </div>
+                  <div className="text-xs font-semibold text-white truncate">
+                    {calculationSummary ? `${calculationSummary.nights} Malam • Rp ${calculationSummary.formattedTotal}` : ''}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileTab('form')}
+                  className="px-3.5 py-2 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-charcoal-950 font-bold rounded-lg text-xs whitespace-nowrap flex items-center gap-1.5 shadow active:scale-95 transition-transform"
+                >
+                  <span>Lanjut Isi Data</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : checkIn ? (
+              <div className="p-2.5 bg-gold-50 border border-gold-200 text-charcoal-900 rounded-xl text-xs text-center font-medium">
+                Check-in: <strong className="text-gold-800">{formatDisplayDate(checkIn)}</strong>. Silakan pilih tanggal check-out di kalender.
+              </div>
+            ) : (
+              <div className="p-2.5 bg-gray-50 border border-gray-200 text-gray-600 rounded-xl text-xs text-center font-medium">
+                Ketuk tanggal di kalender untuk menentukan check-in &amp; check-out.
+              </div>
+            )}
           </div>
         </div>
 
         {/* ================= RIGHT SECTION: DARK BOOKING SIDEBAR ================= */}
-        <div className="w-full lg:w-[440px] xl:w-[480px] 2xl:w-[500px] bg-charcoal-950 text-white flex flex-col h-full max-h-full border-t lg:border-t-0 lg:border-l border-white/10 relative overflow-hidden flex-shrink-0">
+        <div
+          className={`w-full lg:w-[440px] xl:w-[480px] 2xl:w-[500px] bg-charcoal-950 text-white flex-col h-full max-h-full border-t lg:border-t-0 lg:border-l border-white/10 relative overflow-hidden flex-shrink-0 ${
+            mobileTab === 'form' ? 'flex' : 'hidden lg:flex'
+          }`}
+        >
           {/* Pinned Top Bar with Title & Close Button */}
           <div className="p-4 sm:p-5 pb-3 sm:pb-3.5 border-b border-white/10 flex items-start justify-between gap-3 bg-charcoal-950 flex-shrink-0 z-20">
             <div>
@@ -601,7 +700,7 @@ export default function OnlineBookingModal({
             <button
               type="button"
               onClick={triggerClose}
-              className="text-white/60 hover:text-white p-1.5 -mr-1 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
+              className="hidden lg:flex text-white/60 hover:text-white p-1.5 -mr-1 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
               aria-label="Tutup popup"
             >
               <X className="w-5 h-5" />
@@ -621,13 +720,21 @@ export default function OnlineBookingModal({
 
             {/* Tanggal Kedatangan & Keberangkatan (Grid 2 Kolom) */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+              <div
+                onClick={() => setMobileTab('calendar')}
+                className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-gold-400/40 p-3 rounded-xl cursor-pointer transition-colors group"
+                title="Ketuk untuk ubah tanggal di kalender"
+              >
                 <div className="text-[10px] font-bold text-gold-400 uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span>Check-in</span>
+                  <span className="flex items-center gap-1">
+                    <span>Check-in</span>
+                    <span className="text-[9px] text-white/40 font-normal lg:hidden">(ubah)</span>
+                  </span>
                   {checkIn && (
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setCheckIn(null);
                         setCheckOut(null);
                       }}
@@ -637,27 +744,37 @@ export default function OnlineBookingModal({
                     </button>
                   )}
                 </div>
-                <div className="font-medium text-xs sm:text-sm text-white truncate">
+                <div className="font-medium text-xs sm:text-sm text-white truncate group-hover:text-gold-300 transition-colors">
                   {formatDisplayDate(checkIn) || (
                     <span className="text-white/40 italic text-xs">Pilih di kalender</span>
                   )}
                 </div>
               </div>
 
-              <div className="bg-white/5 border border-white/10 p-3 rounded-xl">
+              <div
+                onClick={() => setMobileTab('calendar')}
+                className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-gold-400/40 p-3 rounded-xl cursor-pointer transition-colors group"
+                title="Ketuk untuk ubah tanggal di kalender"
+              >
                 <div className="text-[10px] font-bold text-gold-400 uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span>Check-out</span>
+                  <span className="flex items-center gap-1">
+                    <span>Check-out</span>
+                    <span className="text-[9px] text-white/40 font-normal lg:hidden">(ubah)</span>
+                  </span>
                   {checkOut && (
                     <button
                       type="button"
-                      onClick={() => setCheckOut(null)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCheckOut(null);
+                      }}
                       className="text-[9px] text-white/40 hover:text-gold-300 underline lowercase"
                     >
                       ubah
                     </button>
                   )}
                 </div>
-                <div className="font-medium text-xs sm:text-sm text-white truncate">
+                <div className="font-medium text-xs sm:text-sm text-white truncate group-hover:text-gold-300 transition-colors">
                   {formatDisplayDate(checkOut) || (
                     <span className="text-white/40 italic text-xs">Pilih di kalender</span>
                   )}
@@ -821,9 +938,14 @@ export default function OnlineBookingModal({
                 </div>
               </div>
             ) : (
-              <div className="p-2 rounded-xl bg-white/5 border border-white/10 text-[11px] text-white/50 text-center italic">
-                Pilih tanggal check-in &amp; check-out di kalender
-              </div>
+              <button
+                type="button"
+                onClick={() => setMobileTab('calendar')}
+                className="w-full p-3 rounded-xl bg-gold-500/10 hover:bg-gold-500/20 border border-gold-400/30 text-xs text-gold-300 text-center font-medium transition-all flex items-center justify-center gap-2 group cursor-pointer"
+              >
+                <CalendarIcon className="w-4 h-4 text-gold-400 group-hover:scale-110 transition-transform" />
+                <span>Pilih tanggal check-in &amp; check-out di kalender &rarr;</span>
+              </button>
             )}
 
             {/* Divider: Data Kontak Pemesan */}
@@ -983,6 +1105,16 @@ export default function OnlineBookingModal({
 
             {/* Tombol Aksi Booking */}
             <div className="pt-2">
+              {/* Tombol kembali ke kalender di versi mobile */}
+              <button
+                type="button"
+                onClick={() => setMobileTab('calendar')}
+                className="lg:hidden w-full mb-3 py-2.5 px-3 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-xs text-gold-300 font-medium flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <CalendarIcon className="w-3.5 h-3.5 text-gold-400" />
+                <span>&larr; Lihat / Ubah Tanggal di Kalender</span>
+              </button>
+
               <button
                 type="submit"
                 disabled={isSubmitting}
