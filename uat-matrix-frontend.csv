@@ -1,0 +1,220 @@
+﻿No,"ID Pengujian","Modul / Fitur","Skenario Pengujian","Tipe Perangkat / Viewport","Prasyarat (Pre-condition)","Langkah-langkah Pengujian (Test Steps)","Hasil yang Diharapkan (Expected Result)","Kriteria Penerimaan (Acceptance Criteria)","Status Pengujian","Tingkat Kepentingan (Severity)","Catatan Penguji"
+1,UAT-FE-NAV-001,"1. Navigasi & Header","Navigasi Menu Header Desktop","Desktop (>= 1024px)","Pengguna membuka halaman utama di browser desktop.","1. Buka website di desktop.
+2. Klik menu 'Tentang', 'Fasilitas', 'Galeri', 'Tarif', 'Lokasi', 'Tata Tertib', dan 'Cek Booking'.","1. Halaman melakukan smooth scroll ke section yang dituju.
+2. Untuk menu Tata Tertib dan Cek Booking, halaman berpindah ke rute yang sesuai.","Semua link menu desktop berfungsi dan mengarahkan ke target yang benar.",Pass,Tinggi,"Diuji di Chrome & Edge Desktop."
+2,UAT-FE-NAV-002,"1. Navigasi & Header","Sticky Header & Efek Glassmorphism saat Scroll","Desktop & Mobile","Pengguna berada di halaman utama.","1. Scroll halaman ke bawah melewati section Hero.
+2. Perhatikan perubahan tampilan navbar header.","1. Header tetap menempel di bagian atas layar (sticky).
+2. Background header berubah menjadi gelap semi-transparan dengan efek backdrop blur (glassmorphism).","Header selalu terlihat saat scroll dan tidak mengganggu konten di bawahnya.",Pass,Sedang,"Memberikan kesan visual premium."
+3,UAT-FE-NAV-003,"1. Navigasi & Header","Tombol CTA ""Reservasi Villa"" di Header","Desktop & Mobile","Website terbuka di perangkat apa pun.","1. Klik tombol emas 'Reservasi Villa' di pojok kanan header.","1. Popup modal reservasi online terbuka seketika dengan animasi smooth.
+2. Latar belakang meredup dengan efek backdrop blur.","Modal reservasi online terbuka tanpa delay atau error.",Pass,Kritis,"Akses utama menuju alur pemesanan."
+4,UAT-FE-NAV-004,"1. Navigasi & Header","Hamburger Menu & Animasi Drawer Mobile","Mobile (< 1024px)","Pengguna membuka website di smartphone atau mobile viewport.","1. Ketuk ikon hamburger di pojok kanan atas.
+2. Perhatikan animasi drawer dan transisi ikon.
+3. Ketuk ikon silang (X) untuk menutup.","1. Ikon hamburger bertransisi memutar 90 derajat menjadi ikon 'X'.
+2. Drawer menu meluncur halus dari atas (slide down spring motion).
+3. Tautan menu muncul secara berurutan (staggered animation).
+4. Menu tertutup dengan mulus saat ikon 'X' ditekan.","Animasi drawer halus (60fps) dan tidak ada jeda tampilan.",Pass,Tinggi,"Menggunakan framer-motion."
+5,UAT-FE-NAV-005,"1. Navigasi & Header","Navigasi Menu pada Mobile Drawer","Mobile (< 1024px)","Drawer menu mobile dalam kondisi terbuka.","1. Ketuk salah satu item menu (misal: 'Fasilitas' atau 'Cek Reservasi').","1. Drawer menu otomatis menutup seketika.
+2. Layar melakukan smooth scroll ke section yang dipilih atau berpindah ke halaman tujuan.","Menu otomatis menutup saat salah satu tautan diklik sehingga tidak menghalangi konten.",Pass,Tinggi,"UX mobile optimal."
+6,UAT-FE-NAV-006,"1. Navigasi & Header","Backdrop Dimmer & Blur pada Mobile Drawer","Mobile (< 1024px)","Drawer menu mobile dalam kondisi terbuka.","1. Ketuk area di luar kotak drawer menu (area backdrop gelap).","1. Drawer menu tertutup secara mulus.
+2. Layar kembali ke keadaan normal.","Mengetuk area luar drawer berhasil menutup menu.",Pass,Sedang,"Sesuai konvensi mobile UX modern."
+7,UAT-FE-HOM-001,"2. Beranda & Landing Page","Tampilan Visual Hero Section & Identitas Villa","Desktop & Mobile","Pengguna mengakses URL utama website.","1. Buka halaman utama website.
+2. Perhatikan banner gambar, badge lokasi, nama villa, dan deskripsi singkat.","1. Gambar hero termuat tajam dan teroptimasi.
+2. Nama villa, lokasi (Puncak Bogor), dan slogan tampil dengan tipografi premium tanpa teks terpotong.","Visual hero memukau dan layout proporsional di semua ukuran layar.",Pass,Tinggi,"Kesan pertama pengunjung website."
+8,UAT-FE-HOM-002,"2. Beranda & Landing Page","Bar Cek Ketersediaan Cepat di Hero","Desktop & Mobile","Pengguna berada di area Hero Section.","1. Ketuk/klik kolom Check-in dan pilih tanggal.
+2. Ketuk/klik kolom Check-out dan pilih tanggal.
+3. Pilih jumlah tamu.","1. Datepicker muncul dengan format tanggal yang jelas.
+2. Tanggal yang dipilih terpasang di bar ketersediaan.
+3. Counter tamu bekerja sesuai batas maksimal villa.","Input tanggal dan tamu dapat dipilih dengan mudah.",Pass,Tinggi,"Form ketersediaan instan di landing page."
+9,UAT-FE-HOM-003,"2. Beranda & Landing Page","Tombol ""Cek Ketersediaan"" di Hero Membuka Modal Reservasi","Desktop & Mobile","Tanggal atau tamu telah dipilih pada Bar Hero.","1. Klik tombol 'Cek Ketersediaan' di Bar Hero.","1. Modal reservasi online terbuka.
+2. Tanggal check-in, check-out, dan jumlah tamu yang dipilih di Hero otomatis terisi ke dalam modal.","Data input dari Hero tersinkronisasi ke dalam modal reservasi.",Pass,Kritis,"Seamless state transfer."
+10,UAT-FE-HOM-004,"2. Beranda & Landing Page","Section ""Tentang Villa"" (About Section)","Desktop & Mobile","Pengguna berada di halaman utama.","1. Scroll ke section 'Tentang Villa'.
+2. Periksa informasi kapasitas, jumlah kamar tidur, kamar mandi, dan keunggulan villa.","1. Data kapasitas (misal: 6-25 tamu), kamar tidur, dan fasilitas utama tampil rapi.
+2. Ikon dan teks terbaca jelas dan layout responsif.","Informasi properti villa akurat dan representatif.",Pass,Sedang,"Data tersinkron dari backend VillaContext."
+11,UAT-FE-HOM-005,"2. Beranda & Landing Page","Section ""Fasilitas Villa"" (Facilities Grid)","Desktop & Mobile","Pengguna berada di section Fasilitas.","1. Periksa kartu-kartu fasilitas (Private Pool, Karaoke, Billiard, Kitchen Set, WiFi, BBQ, dll.).
+2. Coba hover di desktop atau scroll di mobile.","1. Setiap fasilitas memiliki ikon yang relevan dan nama yang jelas.
+2. Grid menyesuaikan (1-2 kolom di mobile, 3-4 kolom di desktop) tanpa text overlap.","Semua fasilitas villa tersaji lengkap dan informatif.",Pass,Sedang,"Tampilan grid elegan."
+12,UAT-FE-HOM-006,"2. Beranda & Landing Page","Section ""Galeri Foto"" - Filter Tab Kategori","Desktop & Mobile","Pengguna berada di section Galeri Foto.","1. Klik tab filter: 'Semua', 'Kamar Tidur', 'Kolam Renang', 'Ruang Bersama', 'Eksterior'.","1. Grid foto menyaring dan hanya menampilkan foto yang sesuai dengan kategori yang dipilih.
+2. Transisi pergantian foto berjalan halus.","Filter kategori foto berfungsi akurat.",Pass,Sedang,"Interaksi visual responsif."
+13,UAT-FE-HOM-007,"2. Beranda & Landing Page","Lightbox Preview Foto Galeri","Desktop & Mobile","Pengguna melihat grid foto galeri.","1. Klik salah satu foto di galeri.
+2. Klik tombol panah kanan (Next) dan kiri (Previous).
+3. Klik tombol close (X) atau klik di luar foto.","1. Modal lightbox terbuka menampilkan foto dalam resolusi tinggi.
+2. Navigasi Next/Prev menampilkan foto berikutnya/sebelumnya.
+3. Modal tertutup dengan lancar saat tombol close atau backdrop diklik.","Pengalaman melihat foto layar penuh memuaskan dan interaktif.",Pass,Sedang,"Mendukung tombol ESC keyboard."
+14,UAT-FE-HOM-008,"2. Beranda & Landing Page","Section ""Tarif & Ketersediaan"" (Pricing Calendar)","Desktop & Mobile","Pengguna berada di section Tarif.","1. Periksa kalender kalibrasi tarif.
+2. Perhatikan perbedaan tarif weekday (Minggu-Kamis) dan weekend (Jumat-Sabtu).
+3. Klik salah satu tanggal yang tersedia.","1. Tanggal dan tarif harian dalam format Rupiah tertera jelas pada tiap tanggal.
+2. Klik pada tanggal yang tersedia langsung membuka modal reservasi dengan tanggal tersebut terpilih.","Transparansi harga harian villa tersampaikan dengan baik.",Pass,Tinggi,"Sinkron dengan data tarif dinamis."
+15,UAT-FE-HOM-009,"2. Beranda & Landing Page","Section ""Lokasi & Sekitar"" (Map & Places)","Desktop & Mobile","Pengguna berada di section Lokasi.","1. Periksa peta lokasi interaktif.
+2. Klik tombol 'Buka Petunjuk Arah' / 'Google Maps'.
+3. Periksa daftar tempat wisata terdekat beserta estimasi jarak dan waktu tempuh.","1. Peta ter-render dengan pin lokasi villa yang presisi.
+2. Tautan membuka Google Maps pada tab baru mengarah ke koordinat villa.
+3. Daftar destinasi terdekat informatif.","Calon tamu dapat mengetahui rute dan posisi villa secara akurat.",Pass,Sedang,"Memudahkan navigasi wisatawan."
+16,UAT-FE-HOM-010,"2. Beranda & Landing Page","Floating WhatsApp CS Widget","Desktop & Mobile","Pengguna membuka halaman website mana saja.","1. Perhatikan tombol WhatsApp melayang di sudut kanan/kiri bawah layar.
+2. Klik/ketuk tombol WhatsApp.","1. Tombol selalu melayang dan tidak menghalangi tombol penting lainnya.
+2. Klik membuka WhatsApp Web (desktop) atau aplikasi WhatsApp (mobile) langsung ke nomor admin villa dengan pesan pembuka otomatis.","Jalur komunikasi instan via WhatsApp berjalan tanpa hambatan.",Pass,Kritis,"Saluran konversi utama tamu."
+17,UAT-FE-HOM-011,"2. Beranda & Landing Page","Footer Komprehensif","Desktop & Mobile","Pengguna scroll hingga bagian paling bawah halaman.","1. Periksa informasi kontak, alamat lengkap, tautan cepat, dan hak cipta villa.","1. Semua tautan di footer dapat diklik dan mengarah ke section/halaman yang benar.
+2. Tampilan footer rapi, tidak bertumpuk di mobile.","Footer profesional dan informatif.",Pass,Rendah,"Informasi legal & kontak."
+18,UAT-FE-HOM-012,"2. Beranda & Landing Page","Banner Cookie Consent & Privasi","Desktop & Mobile","Pengguna pertama kali mengunjungi website (belum menyetujui cookie).","1. Buka website di tab incognito.
+2. Periksa banner notifikasi cookie di bagian bawah.
+3. Klik tombol 'Setujui' / 'Terima'.","1. Banner cookie consent muncul dengan teks penjelasan kebijakan privasi.
+2. Setelah disetujui, banner menghilang dan status persetujuan tersimpan di localStorage (tidak muncul lagi saat reload).","Kepatuhan privasi pengguna terpenuhi.",Pass,Rendah,"Menyimpan preferensi user."
+19,UAT-FE-BKG-001,"3. Modal Reservasi Online","Pembukaan Modal Reservasi Online","Desktop & Mobile","Pengguna berada di halaman beranda atau klik tombol reservasi.","1. Klik tombol 'Reservasi Villa' di header atau tombol CTA di halaman.","1. Modal reservasi muncul di tengah layar dengan transisi fade & zoom halus.
+2. Scrollbar background body terkunci agar tidak terjadi double scroll.","Modal terbuka dengan transisi visual mulus.",Pass,Kritis,"Titik awal pemesanan online."
+20,UAT-FE-BKG-002,"3. Modal Reservasi Online","Layout Side-by-Side pada Layar Desktop","Desktop (>= 1024px)","Modal reservasi terbuka pada layar desktop.","1. Perhatikan pembagian layar modal reservasi di desktop.","1. Sisi kiri menampilkan kalender ketersediaan multi-bulan yang luas.
+2. Sisi kanan menampilkan sidebar gelap formulir kontak & rincian biaya berdampingan secara utuh.","Kalender dan formulir tampil berdampingan tanpa saling menutupi.",Pass,Kritis,"Layout desktop optimal."
+21,UAT-FE-BKG-003,"3. Modal Reservasi Online","Layout Tabbed Flow pada Layar Mobile","Mobile (< 1024px)","Modal reservasi terbuka pada smartphone / viewport mobile.","1. Buka modal reservasi di mobile.
+2. Perhatikan navigasi tab di bagian atas modal (Tab 1: 'Kalender', Tab 2: 'Kontak & Rincian').
+3. Beralih antar tab.","1. Pada Tab 1 'Kalender': Kalender ketersediaan tampil penuh 100% dan bebas di-scroll tanpa tertutup form.
+2. Pada Tab 2 'Kontak & Rincian': Formulir tampil lengkap dengan tombol aksi di bawah.
+3. Indikator aktif tab berpindah mulus.","Kalender tidak pernah tertutup oleh formulir pada tampilan mobile.",Pass,Kritis,"Menyelesaikan isu kalender ketutupan di mobile."
+22,UAT-FE-BKG-004,"3. Modal Reservasi Online","Navigasi Multi-Bulan di Kalender","Desktop & Mobile","Modal reservasi dalam posisi menampilkan kalender.","1. Klik tombol navigasi panah kanan (Next Month).
+2. Klik tombol navigasi panah kiri (Previous Month).","1. Kalender berpindah ke bulan berikutnya/sebelumnya.
+2. Tarif harian dan status ketersediaan bulan yang dituju ter-render dengan benar.
+3. Tombol Previous Month tidak dapat memilih bulan yang sudah lampau.","Navigasi bulan kalender berfungsi akurat.",Pass,Tinggi,"Mendukung pengecekan ketersediaan bulan depan."
+23,UAT-FE-BKG-005,"3. Modal Reservasi Online","Tampilan Tanggal Terisi / Terblokir di Kalender","Desktop & Mobile","Terdapat tanggal yang sudah dibooking atau diblokir admin pada database.","1. Cari tanggal yang telah dibooking di kalender.
+2. Hover atau ketuk tanggal tersebut.","1. Tanggal terblokir ditandai dengan warna merah / garis strip dan badge 'Booked' / 'Blocked'.
+2. Tanggal tersebut tidak dapat diklik/dipilih sebagai check-in.
+3. Muncul tooltip penjelasan jika tanggal terisi.","Mencegah double booking pada tanggal yang sudah terisi.",Pass,Kritis,"Proteksi ketersediaan tanggal."
+24,UAT-FE-BKG-006,"3. Modal Reservasi Online","Pemilihan Rentang Tanggal Check-in & Check-out","Desktop & Mobile","Kalender reservasi menampilkan tanggal-tanggal yang tersedia.","1. Klik/ketuk tanggal yang tersedia (misal: 25 Sep) -> menjadi Check-in.
+2. Arahkan kursor atau ketuk tanggal kedua (misal: 27 Sep) -> menjadi Check-out.","1. Tanggal pertama mendapat highlight Check-in (emas).
+2. Rentang tanggal antara check-in dan check-out mendapat highlight latar belakang lembut.
+3. Tanggal kedua mendapat highlight Check-out.
+4. Durasi malam dan total biaya langsung terhitung otomatis.","Pemilihan rentang tanggal menginap intuitif dan akurat.",Pass,Kritis,"Logika seleksi tanggal range picker."
+25,UAT-FE-BKG-007,"3. Modal Reservasi Online","Validasi Rentang Tanggal Melewati Tanggal Terblokir","Desktop & Mobile","Terdapat tanggal terblokir di antara dua tanggal yang tersedia.","1. Pilih Check-in sebelum tanggal terblokir.
+2. Pilih Check-out sesudah tanggal terblokir.
+3. Coba lakukan reservasi.","1. Sistem mendeteksi adanya tanggal yang terblokir di dalam rentang yang dipilih.
+2. Sistem menolak pemesanan dan menampilkan pesan peringatan merah: 'Tanggal X sudah terisi/diblokir. Silakan tentukan rentang tanggal lain'.","Sistem tidak mengizinkan pemesanan melangkahi tanggal yang telah terisi.",Pass,Kritis,"Integritas ketersediaan villa."
+26,UAT-FE-BKG-008,"3. Modal Reservasi Online","Bar Aksi Sticky Bawah di Tab Kalender Mobile","Mobile (< 1024px)","Pengguna berada di Tab 1 (Kalender) pada perangkat mobile.","1. Lihat bagian bawah layar saat belum memilih tanggal.
+2. Pilih tanggal check-in saja.
+3. Pilih tanggal check-out.","1. Saat belum ada tanggal: Muncul prompt 'Ketuk tanggal di kalender...'.
+2. Saat baru check-in: Prompt meminta memilih tanggal check-out.
+3. Saat kedua tanggal terpilih: Bar berubah menampilkan rentang tanggal, durasi malam, total biaya, dan tombol emas 'Lanjut Isi Data →'.
+4. Mengetuk tombol otomatis memindahkan tab ke Tab 2 (Kontak & Rincian).","Alur transisi dari kalender menuju pengisian data sangat mulus di layar smartphone.",Pass,Kritis,"Fitur mobile UX unggulan."
+27,UAT-FE-BKG-009,"3. Modal Reservasi Online","Tombol Kembali / Ubah Tanggal di Tab Form Mobile","Mobile (< 1024px)","Pengguna berada di Tab 2 (Kontak & Rincian) pada perangkat mobile.","1. Ketuk tombol '← Lihat / Ubah Tanggal di Kalender' di bagian bawah form.","1. Layar otomatis berpindah kembali ke Tab 1 (Kalender).
+2. Tanggal yang sebelumnya dipilih tetap tersimpan dan tidak terhapus.","Tamu dapat dengan mudah kembali memeriksa atau mengganti tanggal di kalender.",Pass,Tinggi,"Navigasi bolak-balik tanpa kehilangan state form."
+28,UAT-FE-BKG-010,"3. Modal Reservasi Online","Kartu Ringkasan Check-in & Check-out di Formulir","Desktop & Mobile","Pengguna melihat kolom Check-in dan Check-out di formulir.","1. Ketuk/klik kartu Check-in atau Check-out.
+2. Klik tombol 'reset' kecil di pojok kartu.","1. Pada mobile: Mengklik kartu langsung membawa pengguna ke kalender untuk memilih tanggal.
+2. Mengklik 'reset' menghapus pilihan tanggal agar dapat memilih dari awal.","Interaksi kartu tanggal responsif dan memudahkan revisi jadwal.",Pass,Tinggi,"Sinkronisasi dua arah kalender-form."
+29,UAT-FE-BKG-011,"3. Modal Reservasi Online","Pemilihan Jumlah Tamu (Dewasa & Anak)","Desktop & Mobile","Pengaturan villa mengizinkan pemilihan jumlah tamu.","1. Buka dropdown Dewasa dan pilih angka.
+2. Buka dropdown Anak dan pilih angka.
+3. Coba pilih kombinasi yang melebihi kapasitas maksimal villa.","1. Dropdown menampilkan pilihan jumlah tamu yang tersedia.
+2. Jika total tamu melebihi kapasitas maksimal, sistem membatasi pilihan atau menampilkan notifikasi kapasitas.","Jumlah tamu tidak boleh melebihi kapasitas maksimal villa.",Pass,Tinggi,"Validasi batas kapasitas villa."
+30,UAT-FE-BKG-012,"3. Modal Reservasi Online","Pemilihan Skema Pembayaran (Bayar DP vs Bayar Penuh)","Desktop & Mobile","Tanggal check-in dan check-out telah dipilih.","1. Klik opsi 'Bayar DP' (Rp 1.000.000 / malam).
+2. Perhatikan rincian tagihan.
+3. Klik opsi 'Bayar Penuh' (Lunas).","1. Saat memilih 'Bayar DP': Nominal tagihan saat ini adalah Rp 1.000.000 dikalikan jumlah malam, dan tertera nominal sisa pelunasan saat check-in.
+2. Saat memilih 'Bayar Penuh': Nominal tagihan langsung sebesar 100% total sewa villa tanpa sisa pembayaran saat check-in.","Perhitungan skema DP dan Full Payment berubah secara dinamis dan tepat.",Pass,Kritis,"Memudahkan tamu memilih skema pembayaran."
+31,UAT-FE-BKG-013,"3. Modal Reservasi Online","Kalkulasi Otomatis Rincian Biaya Menginap","Desktop & Mobile","Pengguna memilih tanggal menginap dengan durasi 2 malam (misal: 1 weekday + 1 weekend).","1. Perhatikan rincian biaya yang muncul di bawah skema pembayaran.","1. Durasi malam tertera akurat (misal: '2 Malam').
+2. Total biaya sewa villa merupakan akumulasi tarif harian aktual tiap malam.
+3. Tagihan transfer sekarang tertera jelas sesuai skema (DP/Full).
+4. Format mata uang Rupiah rapi (Rp X.XXX.XXX).","Perhitungan tarif tidak ada selisih dan transparan bagi tamu.",Pass,Kritis,"Perhitungan realtime via useMemo hook."
+32,UAT-FE-BKG-014,"3. Modal Reservasi Online","Ketentuan & Tata Cara Booking di Formulir","Desktop & Mobile","Pengguna membaca bagian ketentuan booking pada form.","1. Periksa poin-poin ketentuan pembayaran DP, batas konfirmasi invoice, kebijakan reschedule H-10, dan non-refundable.
+2. Klik link 'Lihat Tata Tertib & Kebijakan Lengkap'.","1. Poin-poin instruksi booking tersusun rapi dengan bullet points.
+2. Link membuka halaman `/tata-tertib` di tab baru tanpa menutup modal reservasi yang sedang diisi.","Tamu teredukasi mengenai aturan menginap sebelum submit.",Pass,Sedang,"Mencegah kesalahpahaman tamu."
+33,UAT-FE-BKG-015,"3. Modal Reservasi Online","Pengisian Data Kontak Pemesan","Desktop & Mobile","Pengguna berada di bagian Data Kontak Pemesan.","1. Masukkan Nama Lengkap sesuai KTP.
+2. Masukkan Nomor WhatsApp aktif (format nomor Indonesia).
+3. Masukkan Alamat Email aktif.
+4. Masukkan Catatan Khusus (opsional).","1. Input field responsif, teks yang diketik tampil jelas tanpa clipping.
+2. Placeholder memberi panduan format pengisian.","Semua kolom input kontak menerima data dengan baik.",Pass,Tinggi,"Data untuk konfirmasi invoice dan WA."
+34,UAT-FE-BKG-016,"3. Modal Reservasi Online","Pilihan Keperluan Menginap (Event Type)","Desktop & Mobile","Pengguna memilih dropdown Keperluan Menginap.","1. Pilih opsi 'Acara Keluarga', 'Gathering Kantor', 'Arisan', atau 'Reuni'.
+2. Ganti opsi menjadi 'Lainnya'.","1. Pilihan tampil rapi melalui CustomSelect.
+2. Saat opsi 'Lainnya' dipilih, muncul input teks tambahan di bawahnya untuk menyebutkan detail acara menginap.","Opsi input teks kondisional muncul hanya jika memilih ""Lainnya"".",Pass,Sedang,"Penting untuk verifikasi operasional villa."
+35,UAT-FE-BKG-017,"3. Modal Reservasi Online","Pertanyaan Status Pernah Menginap Sebelumnya","Desktop & Mobile","Pengguna melihat tombol toggle status menginap.","1. Klik tombol 'Ya, Pernah'.
+2. Klik tombol 'Belum Pernah'.","1. Tombol yang aktif berubah warna menjadi emas dengan background highlight.
+2. Nilai status tersimpan di state form (1 untuk Ya, 0 untuk Belum).","Interaksi toggle tombol instan dan visual feedback jelas.",Pass,Rendah,"Untuk identifikasi returning customer."
+36,UAT-FE-BKG-018,"3. Modal Reservasi Online","Checkbox Persetujuan Tata Tertib Villa","Desktop & Mobile","Pengguna berada di bagian bawah formulir.","1. Klik centang checkbox 'Saya menyetujui tata tertib dan ketentuan...'.
+2. Klik link 'tata tertib dan ketentuan'.","1. Checkbox dapat dicentang dan di-uncheck.
+2. Link membuka halaman `/tata-tertib` di tab baru.","Persetujuan syarat dan ketentuan dapat diverifikasi.",Pass,Tinggi,"Aspek legalitas reservasi."
+37,UAT-FE-BKG-019,"3. Modal Reservasi Online","Validasi Formulir Zod & Tampilan Border Merah","Desktop & Mobile","Pengguna belum mengisi nama, no WA, email, atau tanggal.","1. Klik tombol 'BUAT RESERVASI & LANJUT KE PEMBAYARAN'.","1. Form tidak ter-submit ke server.
+2. Field yang belum diisi atau formatnya salah langsung mendapatkan border merah menyala (border-red-500 ring-1 ring-red-500/50 bg-red-500/10).
+3. Pesan error spesifik muncul tepat di bawah masing-masing field (misal: 'Nama lengkap minimal 3 karakter', 'Nomor WhatsApp minimal 9 digit', 'Format alamat email tidak valid').
+4. Alert bar ringkasan error muncul di bagian atas formulir.","Validasi Zod mencegah pengiriman data invalid dan memberi tanda visual merah yang jelas.",Pass,Kritis,"Telah diuji dan diverifikasi via browser subagent."
+38,UAT-FE-BKG-020,"3. Modal Reservasi Online","Real-time Error Clearance saat Tamu Mengetik","Desktop & Mobile","Field nama/WA/email sedang berstatus error (border merah).","1. Mulai mengetik pada field Nama Lengkap.
+2. Mulai mengetik pada field Nomor WhatsApp.","1. Begitu karakter pertama diketikkan, border merah dan pesan error pada field tersebut seketika hilang.
+2. Field kembali ke tampilan border normal tanpa menunggu tombol submit ditekan ulang.","Error dibersihkan secara real-time saat pengguna memperbaiki data.",Pass,Sedang,"Fungsi clearFieldError() bekerja realtime."
+39,UAT-FE-BKG-021,"3. Modal Reservasi Online","Floating / Fixed Sticky Bottom Button di Formulir","Desktop & Mobile","Formulir reservasi dibuka pada layar smartphone atau desktop.","1. Scroll area formulir ke atas dan ke bawah.
+2. Perhatikan posisi tombol 'BUAT RESERVASI & LANJUT KE PEMBAYARAN'.","1. Tombol 'BUAT RESERVASI & LANJUT KE PEMBAYARAN' tetap melayang (fixed/sticky) di bagian bawah layar dengan background blur dan shadow elegan.
+2. Tombol selalu terlihat dan mudah dijangkau ibu jari tanpa perlu scroll sampai ujung paling bawah.
+3. Konten form di atasnya memiliki area scroll sendiri tanpa tertutup oleh tombol.","Tombol submit selalu terlihat di bagian bawah layar baik di desktop maupun mobile.",Pass,Kritis,"Menghilangkan masalah tombol tersembunyi."
+40,UAT-FE-BKG-022,"3. Modal Reservasi Online","Loading State saat Submit Reservasi","Desktop & Mobile","Semua data formulir telah diisi dengan valid.","1. Klik tombol 'BUAT RESERVASI & LANJUT KE PEMBAYARAN'.","1. Tombol submit berubah status menjadi disabled (mencegah double-click).
+2. Muncul animasi spinner loading dan teks berubah menjadi 'Memproses Reservasi...'.","User feedback visual jelas saat API sedang memproses data.",Pass,Tinggi,"Mencegah duplicate request."
+41,UAT-FE-BKG-023,"3. Modal Reservasi Online","Sukses Submit & Redireksi ke Halaman Pembayaran","Desktop & Mobile","API reservasi berhasil memproses booking dan menghasilkan kode booking.","1. Tunggu respons dari server setelah submit formulir.","1. Modal reservasi otomatis tertutup.
+2. Halaman otomatis berpindah ke rute `/booking?code={KODE_BOOKING}`.
+3. Data booking yang baru dibuat langsung termuat di halaman pembayaran.","Redireksi mulus membawa kode booking unik.",Pass,Kritis,"Alur transaksi berlanjut ke pembayaran."
+42,UAT-FE-BKG-024,"3. Modal Reservasi Online","Penutupan Modal Reservasi Online","Desktop & Mobile","Modal reservasi dalam kondisi terbuka.","1. Klik tombol silang (X) di pojok kanan atas.
+2. Buka modal lagi, klik area luar/backdrop gelap.
+3. Buka modal lagi di desktop, tekan tombol keyboard 'ESC'.","1. Modal tertutup dengan animasi fade out halus.
+2. Body website kembali dapat di-scroll normal.","Modal dapat ditutup dengan mudah melalui tombol X, klik backdrop, dan tombol ESC.",Pass,Tinggi,"Aksesibilitas dan kenyamanan navigasi."
+43,UAT-FE-PAY-001,"4. Instruksi Pembayaran & Upload Bukti","Akses Halaman Pembayaran via Query URL","Desktop & Mobile","Pengguna memiliki kode booking valid (misal: VA-202609-001).","1. Buka URL `/booking?code=VA-202609-001` di browser.","1. Halaman otomatis memuat data booking dari server.
+2. Muncul status reservasi, rincian tanggal, nama tamu, dan total tagihan yang harus dibayar.","Halaman langsung menampilkan rincian booking sesuai kode di URL.",Pass,Kritis,"Rute konfirmasi pembayaran utama."
+44,UAT-FE-PAY-002,"4. Instruksi Pembayaran & Upload Bukti","Form Pencarian Kode Booking jika Mengakses Tanpa URL Param","Desktop & Mobile","Pengguna membuka halaman `/booking` tanpa parameter `code`.","1. Buka halaman `/booking` langsung.
+2. Masukkan kode booking pada kolom input pencarian.
+3. Klik tombol 'Cari Booking'.","1. Halaman menampilkan form input kode booking yang rapi.
+2. Setelah kode dimasukkan dan dicari, data booking termuat dengan benar.","Tamu tetap dapat melacak booking meski membuka URL kosongan.",Pass,Tinggi,"Fallback handling yang ramah pengguna."
+45,UAT-FE-PAY-003,"4. Instruksi Pembayaran & Upload Bukti","Tampilan Rincian Reservasi & Tagihan","Desktop & Mobile","Data booking berhasil dimuat di halaman pembayaran.","1. Periksa kartu detail reservasi (Kode, Nama, Tanggal Check-in/Out, Durasi, Jumlah Tamu, Total Sewa, DP).","1. Semua informasi reservasi tampil akurat sesuai yang diinput saat reservasi.
+2. Nominal tagihan yang harus ditransfer tertera dengan ukuran font besar dan warna kontras.","Informasi tagihan jelas dan tidak membingungkan calon tamu.",Pass,Kritis,"Data lengkap untuk panduan transfer."
+46,UAT-FE-PAY-004,"4. Instruksi Pembayaran & Upload Bukti","Status Badge Reservasi","Desktop & Mobile","Data booking termuat.","1. Perhatikan badge status reservasi (Pending / Menunggu Pembayaran, Terkonfirmasi, Dibatalkan, Selesai).","1. Badge status memiliki warna yang representatif (Kuning untuk Pending, Hijau untuk Terkonfirmasi, Merah untuk Dibatalkan).
+2. Dilengkapi ikon status yang sesuai.","Status transaksi mudah dikenali secara visual.",Pass,Tinggi,"Status real-time."
+47,UAT-FE-PAY-005,"4. Instruksi Pembayaran & Upload Bukti","Tombol Salin Kode Booking & Nomor Rekening Bank","Desktop & Mobile","Pengguna melihat nomor rekening bank tujuan (misal: BCA / Mandiri) dan kode booking.","1. Klik tombol 'Salin' di samping nomor rekening bank.
+2. Klik tombol 'Salin' di samping kode booking.","1. Teks nomor rekening / kode booking tersalin ke clipboard perangkat.
+2. Tombol berubah status menjadi centang hijau dengan teks 'Tersalin!' selama 2 detik sebelum kembali normal.","Fitur copy clipboard berfungsi dan memberikan visual feedback instan.",Pass,Tinggi,"Sangat praktis saat transfer di mobile banking."
+48,UAT-FE-PAY-006,"4. Instruksi Pembayaran & Upload Bukti","Countdown Timer Batas Waktu Pembayaran DP","Desktop & Mobile","Booking berstatus Pending dan memiliki batas waktu pembayaran (expiry date).","1. Perhatikan kotak hitung mundur batas waktu pembayaran.","1. Timer menghitung mundur waktu (Jam, Menit, Detik) secara real-time.
+2. Jika batas waktu habis, muncul peringatan bahwa masa pembayaran telah kedaluwarsa.","Countdown timer berjalan real-time dan akurat.",Pass,Sedang,"Mendorong tamu menyelesaikan transfer tepat waktu."
+49,UAT-FE-PAY-007,"4. Instruksi Pembayaran & Upload Bukti","Form Upload Bukti Pembayaran Transfer","Desktop & Mobile","Pengguna telah melakukan transfer dan memiliki file bukti transfer.","1. Pilih bank tujuan transfer.
+2. Masukkan nama pemilik rekening pengirim.
+3. Masukkan jumlah uang yang ditransfer.
+4. Pilih file gambar bukti transfer dari perangkat atau drag & drop ke area upload.","1. Field input terisi dengan lancar.
+2. File bukti transfer terpilih dan menampilkan nama serta ukuran file.","Formulir upload bukti menerima data dan file dengan baik.",Pass,Kritis,"Langkah verifikasi pembayaran."
+50,UAT-FE-PAY-008,"4. Instruksi Pembayaran & Upload Bukti","Validasi Format & Ukuran File Bukti Pembayaran","Desktop & Mobile","Pengguna mencoba mengunggah file.","1. Coba upload file bukan gambar/PDF (misal: .exe atau .zip).
+2. Coba upload file gambar dengan ukuran di atas batas maksimal (misal: > 5MB).","1. Sistem menolak file yang tidak didukung dan menampilkan pesan error format yang valid (JPG, PNG, WebP, PDF).
+2. Sistem menolak file yang melebihi batas ukuran dan menampilkan peringatan ukuran maksimal file.","Sistem memproteksi jenis dan ukuran file yang diupload.",Pass,Tinggi,"Keamanan dan kebersihan media upload."
+51,UAT-FE-PAY-009,"4. Instruksi Pembayaran & Upload Bukti","Preview Bukti Transfer & Submit Konfirmasi","Desktop & Mobile","File bukti transfer valid telah dipilih.","1. Periksa kotak preview gambar bukti transfer.
+2. Klik tombol 'Kirim Bukti Pembayaran'.","1. Thumbnail preview bukti transfer tampil jelas.
+2. Saat tombol kirim diklik, muncul loading indicator.
+3. Setelah berhasil, muncul notifikasi sukses dan status pembayaran terupdate menjadi 'Menunggu Konfirmasi Admin'.","Proses upload bukti transfer selesai dengan sukses dan data tersimpan.",Pass,Kritis,"Alur konfirmasi transfer berhasil."
+52,UAT-FE-PAY-010,"4. Instruksi Pembayaran & Upload Bukti","Fitur Re-upload Bukti Transfer","Desktop & Mobile","Pengguna sebelumnya telah mengupload bukti transfer tetapi ingin menggantinya.","1. Klik tombol 'Unggah Ulang Bukti' / 'Ganti Bukti Transfer'.
+2. Pilih file baru dan kirim ulang.","1. Form upload terbuka kembali.
+2. File baru menggantikan file sebelumnya setelah konfirmasi.","Tamu dapat memperbarui bukti pembayaran jika terjadi salah kirim foto.",Pass,Sedang,"Fleksibilitas revisi bukti transfer."
+53,UAT-FE-PAY-011,"4. Instruksi Pembayaran & Upload Bukti","Tombol Unduh Invoice / Tanda Terima PDF","Desktop & Mobile","Data reservasi berhasil termuat di halaman pembayaran.","1. Klik tombol 'Unduh Invoice' / 'Download PDF'.","1. Dokumen invoice resmi berformat PDF terunduh ke perangkat pengguna.
+2. Berkas PDF memuat data lengkap villa, rincian biaya, status, dan kode booking.","Invoice PDF dapat diunduh dan dibuka dengan sempurna.",Pass,Tinggi,"Dokumen resmi bukti booking bagi tamu."
+54,UAT-FE-PAY-012,"4. Instruksi Pembayaran & Upload Bukti","Konfirmasi Cepat via WhatsApp dengan Format Pesan Otomatis","Desktop & Mobile","Pengguna berada di halaman pembayaran.","1. Klik tombol 'Konfirmasi Pembayaran via WhatsApp'.","1. Membuka aplikasi WhatsApp ke nomor CS villa.
+2. Kolom chat WhatsApp otomatis terisi pesan template memuat Kode Booking, Nama Tamu, dan Tanggal Menginap.","Pesan otomatis memudahkan tamu melakukan konfirmasi tanpa perlu mengetik ulang.",Pass,Tinggi,"Mempercepat verifikasi oleh admin/owner."
+55,UAT-FE-CHK-001,"5. Cek Status & Reschedule","Pencarian Status Reservasi dengan Kode Booking & No HP","Desktop & Mobile","Pengguna berada di halaman `/cek-booking`.","1. Buka halaman `/cek-booking`.
+2. Masukkan Kode Booking yang valid (misal: VA-202609-001).
+3. Masukkan Nomor WhatsApp yang digunakan saat reservasi.
+4. Klik tombol 'Cari Reservasi'.","1. Sistem memproses pencarian dengan loading state halus.
+2. Jika data cocok, tampil kartu ringkasan reservasi lengkap.","Pencarian berhasil menampilkan data reservasi yang sesuai.",Pass,Kritis,"Verifikasi ganda (kode + nomor HP) untuk privasi."
+56,UAT-FE-CHK-002,"5. Cek Status & Reschedule","Validasi Input Form Pencarian Reservasi","Desktop & Mobile","Pengguna berada di halaman `/cek-booking`.","1. Klik tombol 'Cari Reservasi' dengan kolom kode booking dan nomor HP masih kosong.","1. Form tidak memproses pencarian.
+2. Muncul notifikasi bahwa kode booking dan nomor WhatsApp wajib diisi.","Sistem memvalidasi input sebelum mengirim permintaan ke server.",Pass,Sedang,"Validasi form frontend."
+57,UAT-FE-CHK-003,"5. Cek Status & Reschedule","Penanganan Pencarian Tidak Ditemukan / Data Tidak Cocok","Desktop & Mobile","Pengguna memasukkan kode booking fiktif atau nomor HP yang salah.","1. Masukkan kode booking yang tidak ada (misal: VA-999999-999).
+2. Masukkan nomor HP sembarang.
+3. Klik tombol 'Cari Reservasi'.","1. Sistem menampilkan banner peringatan merah ramah pengguna: 'Data reservasi tidak ditemukan. Pastikan kode booking dan nomor WhatsApp sudah sesuai.'.","Pesan error informatif dan memandu pengguna memeriksa kembali datanya.",Pass,Tinggi,"Error handling yang jelas."
+58,UAT-FE-CHK-004,"5. Cek Status & Reschedule","Pembukaan Modal Ajukan Reschedule Jadwal Menginap","Desktop & Mobile","Data reservasi ditemukan dan berstatus dapat di-reschedule (misal: H-10 sebelum check-in).","1. Klik tombol 'Ajukan Reschedule Jadwal'.","1. Modal pengajuan reschedule terbuka dengan animasi transisi yang mulus.
+2. Menampilkan tanggal menginap saat ini dan kalender pemilihan tanggal baru.","Modal reschedule terbuka dengan data tanggal lama tertera jelas.",Pass,Tinggi,"Fitur self-service reschedule tamu."
+59,UAT-FE-CHK-005,"5. Cek Status & Reschedule","Pemilihan Tanggal Baru pada Modal Reschedule","Desktop & Mobile","Modal reschedule dalam kondisi terbuka.","1. Pilih tanggal Check-in baru yang berstatus tersedia di kalender.
+2. Pilih tanggal Check-out baru.","1. Tanggal yang sudah terisi/diblokir tidak dapat dipilih.
+2. Tanggal baru yang dipilih tampil jelas pada ringkasan perubahan jadwal.","Hanya tanggal yang benar-benar tersedia yang dapat dipilih sebagai jadwal baru.",Pass,Kritis,"Sinkron dengan ketersediaan live."
+60,UAT-FE-CHK-006,"5. Cek Status & Reschedule","Pengisian Alasan & Submit Pengajuan Reschedule","Desktop & Mobile","Tanggal baru telah dipilih pada modal reschedule.","1. Tuliskan alasan reschedule pada kolom yang tersedia.
+2. Klik tombol 'Kirim Pengajuan Reschedule'.","1. Tombol menampilkan loading spinner.
+2. Setelah berhasil, muncul notifikasi sukses bahwa pengajuan reschedule telah diterima dan sedang menunggu persetujuan admin villa.","Pengajuan reschedule tersimpan dan status reservasi terupdate.",Pass,Tinggi,"Notifikasi verifikasi reschedule."
+61,UAT-FE-TRM-001,"6. Tata Tertib & Kebijakan Villa","Akses Halaman Tata Tertib dari Menu & Footer","Desktop & Mobile","Pengguna berada di halaman utama atau modal booking.","1. Klik link 'Tata Tertib' pada header, footer, atau link ketentuan di modal booking.","1. Halaman `/tata-tertib` termuat sempurna dengan tata letak artikel yang rapi, elegan, dan mudah dibaca.","Halaman tata tertib dapat diakses dari semua titik tautan.",Pass,Sedang,"Halaman informatif dan legalitas."
+62,UAT-FE-TRM-002,"6. Tata Tertib & Kebijakan Villa","Kelengkapan Informasi Aturan Menginap Villa","Desktop & Mobile","Pengguna membaca halaman `/tata-tertib`.","1. Periksa bagian Jam Check-in (14:00) & Check-out (12:00).
+2. Periksa aturan larangan merokok di dalam kamar, larangan membawa hewan peliharaan, batas kebisingan malam (quiet hours), dan kebijakan kapasitas tamu maksimal.","1. Semua poin aturan dikelompokkan dalam kategori dan ikon yang jelas.
+2. Tidak ada teks yang tumpang tindih atau sulit dibaca.","Aturan villa jelas, tegas, dan mudah dipahami tamu.",Pass,Sedang,"Menjaga kenyamanan dan keamanan villa."
+63,UAT-FE-TRM-003,"6. Tata Tertib & Kebijakan Villa","Kebijakan Pembatalan, Reschedule & Deposit","Desktop & Mobile","Pengguna membaca kebijakan finansial pada tata tertib.","1. Periksa ketentuan non-refundable (pembatalan tidak dapat mengembalikan uang).
+2. Periksa ketentuan reschedule maksimal 1x (diinfokan minimal H-10).
+3. Periksa aturan deposit jaminan (security deposit) saat check-in.","1. Informasi finansial tertulis transparan.
+2. Terdapat tombol CTA untuk langsung reservasi atau chat WhatsApp bantuan jika ada pertanyaan.","Kebijakan non-refundable dan reschedule tersampaikan dengan jelas.",Pass,Tinggi,"Dasar hukum operasional villa."
+64,UAT-FE-RSP-001,"7. Responsivitas & Kompatibilitas","Uji Responsivitas Desktop Resolusi Tinggi","Desktop (1280px - 1920px)","Website diuji pada monitor laptop dan PC desktop resolusi besar.","1. Buka website pada resolusi 1366x768, 1536x864, dan 1920x1080.
+2. Periksa alignment container, keterbacaan teks, dan modal reservasi.","1. Container terpusat dengan padding proporsional (max-w-7xl).
+2. Gambar tidak pecah, tombol dan card simetris.","Tampilan sempurna di layar laptop maupun monitor desktop besar.",Pass,Tinggi,"Uji layar desktop."
+65,UAT-FE-RSP-002,"7. Responsivitas & Kompatibilitas","Uji Responsivitas Tablet / iPad","Tablet (768px - 1024px)","Website diuji pada resolusi tablet (portrait & landscape).","1. Buka website pada viewport iPad (768x1024 dan 1024x768).
+2. Uji navigasi, grid galeri, fasilitas, dan modal reservasi.","1. Grid berpindah adaptif menjadi 2 kolom.
+2. Header menyesuaikan dan modal reservasi menyesuaikan proporsi tablet.","Layout fleksibel pada perangkat tablet.",Pass,Sedang,"Uji layar tablet."
+66,UAT-FE-RSP-003,"7. Responsivitas & Kompatibilitas","Uji Responsivitas Smartphone Layar Kecil & Sedang","Mobile (375px - 430px)","Website diuji pada smartphone (iPhone SE, iPhone 14/15/16 Pro, Samsung Galaxy, Xiaomi).","1. Buka website pada viewport 375px, 390px, dan 414px.
+2. Buka modal reservasi online dan cek semua interaksi kalender dan formulir.","1. Tidak terjadi horizontal scrolling pada halaman (no horizontal overflow).
+2. Kalender tampil utuh pada Tab 1.
+3. Form tampil utuh pada Tab 2 dengan tombol aksi fixed di bawah.","Tidak ada elemen yang terpotong, tertimpa, atau keluar dari batas layar smartphone.",Pass,Kritis,"Telah diverifikasi menggunakan browser mobile subagent."
+67,UAT-FE-RSP-004,"7. Responsivitas & Kompatibilitas","Perilaku Virtual Keyboard pada Smartphone","Mobile (< 1024px)","Pengguna mengisi form modal reservasi pada smartphone fisik.","1. Ketuk input Nama, Nomor HP, atau Email sehingga keyboard virtual muncul.
+2. Periksa posisi tombol submit dan area scroll form.","1. Area input tetap terlihat dan dapat diketik dengan leluasa.
+2. Tombol submit tetap dapat diakses setelah keyboard menutup atau saat di-scroll.","Keyboard virtual tidak merusak layout modal reservasi.",Pass,Tinggi,"Dukungan input sentuh mobile."
+68,UAT-FE-RSP-005,"7. Responsivitas & Kompatibilitas","Kompatibilitas Lintas Browser Modern","Desktop & Mobile","Pengujian dilakukan di berbagai web browser utama.","1. Buka website di Google Chrome, Safari (macOS & iOS), Mozilla Firefox, dan Microsoft Edge.","1. Semua komponen visual, animasi framer-motion, datepicker, form validasi, dan styling Tailwind CSS berjalan konsisten tanpa error pada seluruh browser.","Kompatibilitas lintas browser 100% terjaga.",Pass,Tinggi,"Menggunakan standar modern web CSS/HTML5."
