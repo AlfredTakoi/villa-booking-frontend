@@ -43,16 +43,49 @@ export default function Navbar() {
     };
   }, []);
 
+  // Lock body scroll when mobile menu is open & listen for Escape key
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setMobileMenuOpen(false);
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.body.style.overflow = '';
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [mobileMenuOpen]);
+
   const rawPhone = (villa.phone || '').replace(/[^0-9]/g, '');
   const waPhone = rawPhone.startsWith('0') ? '62' + rawPhone.slice(1) : (rawPhone || '628164819298');
   const displayPhone = villa.phone || '+62 816-4819-298';
 
   return (
     <>
+      {/* Dimmed Backdrop for Mobile Menu (Placed outside header to cover full viewport regardless of scroll position) */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            key="mobile-menu-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm md:hidden cursor-pointer"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-label="Tutup menu navigasi"
+          />
+        )}
+      </AnimatePresence>
+
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled
-            ? 'bg-charcoal-900/90 backdrop-blur-md py-3 shadow-luxury border-b border-white/10'
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled || mobileMenuOpen
+            ? 'bg-charcoal-900/95 backdrop-blur-md py-3 shadow-luxury border-b border-white/10'
             : 'bg-gradient-to-b from-charcoal-950/80 via-charcoal-950/40 to-transparent py-5'
         }`}
       >
@@ -135,28 +168,16 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* Animated Mobile Drawer & Backdrop */}
+        {/* Animated Mobile Drawer */}
         <AnimatePresence>
           {mobileMenuOpen && (
-            <>
-              {/* Dimmed Backdrop */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="fixed inset-0 top-[64px] z-40 bg-black/65 backdrop-blur-sm md:hidden"
-                onClick={() => setMobileMenuOpen(false)}
-              />
-
-              {/* Slide Down Mobile Menu Drawer */}
-              <motion.div
-                initial={{ opacity: 0, y: -16, height: 0 }}
-                animate={{ opacity: 1, y: 0, height: 'auto' }}
-                exit={{ opacity: 0, y: -12, height: 0 }}
-                transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-                className="overflow-hidden md:hidden bg-charcoal-950/95 backdrop-blur-2xl border-b border-white/15 px-6 py-6 text-white shadow-2xl relative z-50"
-              >
+            <motion.div
+              initial={{ opacity: 0, y: -16, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -12, height: 0 }}
+              transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden md:hidden bg-charcoal-950/95 backdrop-blur-2xl border-b border-white/15 px-6 py-6 text-white shadow-2xl relative z-50"
+            >
                 <div className="space-y-3">
                   {[
                     { href: '/#about', label: 'Tentang Villa' },
@@ -225,7 +246,6 @@ export default function Navbar() {
                   </motion.div>
                 </div>
               </motion.div>
-            </>
           )}
         </AnimatePresence>
       </header>
