@@ -1,14 +1,22 @@
 import type { NextConfig } from "next";
 
-const isExport = process.env.NEXT_EXPORT === 'true';
+const isProd = process.env.NODE_ENV === 'production';
+const isExport = isProd && process.env.NEXT_EXPORT === 'true';
 const backendBaseUrl = (
   process.env.SIPKK_BACKEND_BASE_URL ||
   'https://alfredtakoi.net/villa-admin'
 ).replace(/\/+$/, '');
 
+// Development: http://localhost:3000 (root)
+// Production: /villa (subfolder for cPanel hosting)
+const basePath = isProd ? (process.env.NEXT_PUBLIC_BASE_PATH || '/villa') : '';
+
 const nextConfig: NextConfig = {
   ...(isExport ? { output: 'export' } : {}),
-  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  basePath: basePath,
+  env: {
+    NEXT_PUBLIC_BASE_PATH: basePath,
+  },
   trailingSlash: true,
   images: {
     unoptimized: true,

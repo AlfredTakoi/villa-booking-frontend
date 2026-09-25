@@ -13,8 +13,9 @@ const BACKEND_BASE_URL = (
 ).replace(/\/+$/, '');
 
 const FRONTEND_BASE_PATH = (
-  process.env.NEXT_PUBLIC_BASE_PATH ||
-  '/villa'
+  process.env.NODE_ENV === 'production'
+    ? (process.env.NEXT_PUBLIC_BASE_PATH || '/villa')
+    : ''
 ).replace(/\/+$/, '');
 
 /**

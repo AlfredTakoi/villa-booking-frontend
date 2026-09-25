@@ -71,9 +71,7 @@ export default function OnlineBookingModal({
   const [isAnimating, setIsAnimating] = useState(false);
 
   // Mobile Tab State ('calendar' | 'form') to guarantee calendar is never covered on mobile
-  const [mobileTab, setMobileTab] = useState<'calendar' | 'form'>(
-    initialCheckIn && initialCheckOut ? 'form' : 'calendar'
-  );
+  const [mobileTab, setMobileTab] = useState<'calendar' | 'form'>('calendar');
 
   // Selected state
   const [checkIn, setCheckIn] = useState<string | null>(initialCheckIn || null);
@@ -110,11 +108,8 @@ export default function OnlineBookingModal({
     if (isOpen) {
       if (initialCheckIn) setCheckIn(initialCheckIn);
       if (initialCheckOut) setCheckOut(initialCheckOut);
-      if (initialCheckIn && initialCheckOut) {
-        setMobileTab('form');
-      } else {
-        setMobileTab('calendar');
-      }
+      // Selalu masuk ke tab kalender terlebih dahulu agar tamu bisa melihat ketersediaan tanggal
+      setMobileTab('calendar');
       if (initialGuests) {
         const gNum = Math.min(maxGuests, Math.max(1, Number(initialGuests) || 2));
         setAdults(gNum);
@@ -165,7 +160,7 @@ export default function OnlineBookingModal({
       try {
         const todayObj = new Date();
         const startOfMonth = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-01`;
-        const res = await fetch(`/api/villa/availability?start_date=${startOfMonth}`);
+        const res = await fetch(buildApiUrl(`/api/villa/availability?start_date=${startOfMonth}`));
         const result = await res.json();
 
         if (isMounted && result.success && result.data) {
@@ -1087,7 +1082,7 @@ export default function OnlineBookingModal({
                     />
                     <span className="text-[11px] text-white/80 group-hover:text-white transition-colors leading-relaxed">
                       Saya menyetujui{' '}
-                      <a
+                      <Link
                         href="/tata-tertib"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -1095,7 +1090,7 @@ export default function OnlineBookingModal({
                         className="text-gold-400 font-semibold underline hover:text-gold-300 transition-colors"
                       >
                         tata tertib dan ketentuan
-                      </a>{' '}
+                      </Link>{' '}
                       menginap di {villa.name || 'villa'}.
                     </span>
                   </label>

@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Star, ArrowRight, Users, AlertCircle } from 'lucide-react';
+import { Star, ArrowRight, AlertCircle } from 'lucide-react';
 import { useVilla } from '@/context/VillaContext';
 import CustomDatePicker from '@/components/ui/CustomDatePicker';
-import CustomSelect from '@/components/ui/CustomSelect';
 import { buildApiUrl, resolveMediaUrl } from '@/lib/utils/api';
 
 export default function HeroSection() {
@@ -174,10 +173,10 @@ export default function HeroSection() {
         )}
 
         {/* Booking Bar Widget */}
-        <div className={`mx-auto bg-charcoal-900/85 backdrop-blur-xl border border-white/15 p-4 sm:p-5 rounded-3xl sm:rounded-full shadow-2xl mb-12 ${Boolean(villa.allow_guest_selection) ? 'max-w-4xl' : 'max-w-3xl'}`}>
+        <div className="mx-auto bg-charcoal-900/85 backdrop-blur-xl border border-white/15 p-4 sm:p-5 rounded-3xl sm:rounded-full shadow-2xl mb-12 max-w-3xl">
           <form
             onSubmit={handleCheckAvailability}
-            className={`grid grid-cols-1 ${Boolean(villa.allow_guest_selection) ? 'sm:grid-cols-4' : 'sm:grid-cols-3'} gap-4 items-center`}
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center"
           >
             {/* Check In */}
             <div className="text-left px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
@@ -212,25 +211,6 @@ export default function HeroSection() {
                 placeholder="Pilih Tanggal"
               />
             </div>
-
-            {/* Guests (Hanya tampil jika allow_guest_selection aktif) */}
-            {Boolean(villa.allow_guest_selection) && (
-              <div className="text-left px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
-                <label className="block text-[11px] font-bold text-gold-400 uppercase tracking-wider mb-1">
-                  Jumlah Tamu
-                </label>
-                <CustomSelect
-                  value={guests}
-                  onChange={(val) => setGuests(val)}
-                  buttonClassName="w-full flex items-center justify-between gap-2 bg-transparent text-white text-sm font-semibold focus:outline-none cursor-pointer border-0 p-0"
-                  icon={<Users className="w-4 h-4 text-gold-400/80" />}
-                  options={Array.from({ length: maxGuests }, (_, i) => i + 1).map((n) => ({
-                    value: String(n),
-                    label: `${n} Tamu ${n === maxGuests ? '(Maksimal)' : ''}`,
-                  }))}
-                />
-              </div>
-            )}
 
             {/* Submit Button */}
             <div>
