@@ -17,6 +17,59 @@ import {
 import { useVilla } from '@/context/VillaContext';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { buildApiUrl } from '@/lib/utils/api';
+import { z } from 'zod';
+
+// Zod Schema untuk validasi form reservasi
+const bookingFormSchema = z
+  .object({
+    checkIn: z.string().min(1, 'Tanggal check-in wajib dipilih'),
+    checkOut: z.string().min(1, 'Tanggal check-out wajib dipilih'),
+    guestName: z
+      .string()
+      .trim()
+      .min(3, 'Nama lengkap minimal 3 karakter')
+      .max(100, 'Nama lengkap maksimal 100 karakter'),
+    guestPhone: z
+      .string()
+      .trim()
+      .min(9, 'Nomor WhatsApp minimal 9 digit')
+      .max(16, 'Nomor WhatsApp maksimal 16 digit')
+      .regex(/^[0-9+() -]+$/, 'Format nomor WhatsApp hanya boleh angka dan simbol telepon'),
+    guestEmail: z
+      .string()
+      .trim()
+      .min(1, 'Alamat email wajib diisi')
+      .email('Format alamat email tidak valid (contoh: nama@domain.com)'),
+    eventType: z.string().min(1, 'Pilih keperluan menginap'),
+    eventTypeOther: z.string().optional(),
+    agreedTerms: z.boolean().refine((val) => val === true, {
+      message: 'Anda harus menyetujui tata tertib & ketentuan villa',
+    }),
+  })
+  .refine(
+    (data) => {
+      if (data.checkIn && data.checkOut) {
+        return data.checkOut > data.checkIn;
+      }
+      return true;
+    },
+    {
+      message: 'Tanggal check-out harus setelah tanggal check-in',
+      path: ['checkOut'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.eventType === 'Lainnya') {
+        return !!data.eventTypeOther && data.eventTypeOther.trim().length >= 3;
+      }
+      return true;
+    },
+    {
+      message: 'Sebutkan keperluan menginap Anda (minimal 3 karakter)',
+      path: ['eventTypeOther'],
+    }
+  );
 
 function formatRupiah(amount: number | string): string {
   const num = Math.round(Number(amount) || 0);
@@ -99,6 +152,17 @@ export default function OnlineBookingModal({
   const [basePrice, setBasePrice] = useState<number>(2750000);
   const [isLoadingRates, setIsLoadingRates] = useState<boolean>(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Helper untuk membersihkan error spesifik saat user mulai mengetik/mengubah nilai
+  const clearFieldError = (field: string) => {
+    setFormErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   // Calendar month offset (0 = current month, 1 = next month, etc.)
   const [monthOffset, setMonthOffset] = useState<number>(0);
@@ -357,59 +421,77 @@ export default function OnlineBookingModal({
     };
   }, [checkIn, checkOut, dailyRates, basePrice, paymentType]);
 
-  // Handle Book submit
+  // Handle Book submit with Zod validation
   const handleProceedBooking = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setAlertMessage(null);
-
-    if (!checkIn) {
-      setAlertMessage('Silakan pilih Tanggal Kedatangan (Check-in) di kalender terlebih dahulu.');
-      return;
-    }
+    setFormErrors({});
 
     let finalCheckOut = checkOut;
-    if (!finalCheckOut) {
+    if (!finalCheckOut && checkIn) {
       // Auto-set checkOut to next day if available
       const nextDay = new Date(checkIn);
       nextDay.setDate(nextDay.getDate() + 1);
       const nextDayStr = nextDay.toISOString().split('T')[0];
       if (!dailyRates[nextDayStr]?.is_blocked) {
         finalCheckOut = nextDayStr;
-      } else {
-        setAlertMessage('Silakan pilih Tanggal Keberangkatan (Check-out) di kalender.');
-        return;
+        setCheckOut(nextDayStr);
       }
     }
 
-    if (finalCheckOut <= checkIn) {
-      setAlertMessage('Tanggal check-out harus setelah tanggal check-in.');
+    const formData = {
+      checkIn: checkIn || '',
+      checkOut: finalCheckOut || '',
+      guestName,
+      guestPhone,
+      guestEmail,
+      eventType,
+      eventTypeOther,
+      agreedTerms,
+    };
+
+    const parseResult = bookingFormSchema.safeParse(formData);
+
+    if (!parseResult.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parseResult.error.issues) {
+        const fieldName = issue.path[0] as string;
+        if (fieldName && !fieldErrors[fieldName]) {
+          fieldErrors[fieldName] = issue.message;
+        }
+      }
+      setFormErrors(fieldErrors);
+
+      if (fieldErrors.checkIn || fieldErrors.checkOut) {
+        setAlertMessage(fieldErrors.checkIn || fieldErrors.checkOut || 'Silakan pilih tanggal check-in & check-out di kalender terlebih dahulu.');
+        setMobileTab('calendar');
+      } else {
+        setAlertMessage('Mohon periksa data Anda. Kolom yang ditandai merah wajib diisi dengan benar.');
+      }
       return;
     }
 
-    // Validasi data kontak pemesan
-    if (!guestName.trim()) {
-      setAlertMessage('Mohon lengkapi Nama Lengkap pemesan sesuai KTP/Paspor.');
-      return;
-    }
+    // Periksa apakah ada tanggal yang terblokir di rentang yang dipilih
+    if (checkIn && finalCheckOut) {
+      const cur = new Date(checkIn);
+      const endD = new Date(finalCheckOut);
+      let hasBlockedInRange = false;
+      let blockedDateStr = '';
+      while (cur < endD) {
+        const dStr = cur.toISOString().split('T')[0];
+        if (dailyRates[dStr]?.is_blocked) {
+          hasBlockedInRange = true;
+          blockedDateStr = dStr;
+          break;
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
 
-    if (!guestPhone.trim()) {
-      setAlertMessage('Mohon lengkapi Nomor WhatsApp / HP aktif untuk konfirmasi reservasi.');
-      return;
-    }
-
-    if (!guestEmail.trim() || !guestEmail.includes('@')) {
-      setAlertMessage('Mohon lengkapi Alamat Email yang valid untuk pengiriman invoice.');
-      return;
-    }
-
-    if (eventType === 'Lainnya' && !eventTypeOther.trim()) {
-      setAlertMessage('Mohon sebutkan rincian keperluan menginap Anda.');
-      return;
-    }
-
-    if (!agreedTerms) {
-      setAlertMessage('Anda harus menyetujui tata tertib dan ketentuan villa untuk melanjutkan.');
-      return;
+      if (hasBlockedInRange) {
+        setAlertMessage(`Tanggal ${formatDisplayDate(blockedDateStr)} sudah terisi/diblokir. Silakan pilih rentang tanggal lain di kalender.`);
+        setMobileTab('calendar');
+        return;
+      }
     }
 
     const totalGuests = allowGuestSelection ? adults + children : 1;
@@ -702,9 +784,14 @@ export default function OnlineBookingModal({
             </button>
           </div>
 
-          {/* Dedicated Scrollable Form Body */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5 lg:p-6 pb-24">
-            <form onSubmit={handleProceedBooking} className="space-y-4">
+          {/* Dedicated Form Container with Scrollable Body and Fixed Bottom Bar */}
+          <form
+            onSubmit={handleProceedBooking}
+            noValidate
+            className="flex-1 flex flex-col min-h-0 overflow-hidden"
+          >
+            {/* Scrollable Form Body */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5 lg:p-6 space-y-4 pb-6">
               {/* Alert banner jika ada validasi / error */}
               {alertMessage && (
                 <div className="p-3 bg-red-500/15 border border-red-500/30 text-red-300 rounded-xl text-xs flex items-start gap-2 animate-fade-in">
@@ -713,69 +800,93 @@ export default function OnlineBookingModal({
                 </div>
               )}
 
-            {/* Tanggal Kedatangan & Keberangkatan (Grid 2 Kolom) */}
-            <div className="grid grid-cols-2 gap-3">
-              <div
-                onClick={() => setMobileTab('calendar')}
-                className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-gold-400/40 p-3 rounded-xl cursor-pointer transition-colors group"
-                title="Ketuk untuk ubah tanggal di kalender"
-              >
-                <div className="text-[10px] font-bold text-gold-400 uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <span>Check-in</span>
-                    <span className="text-[9px] text-white/40 font-normal lg:hidden">(ubah)</span>
-                  </span>
-                  {checkIn && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCheckIn(null);
-                        setCheckOut(null);
-                      }}
-                      className="text-[9px] text-white/40 hover:text-gold-300 underline lowercase"
-                    >
-                      reset
-                    </button>
-                  )}
-                </div>
-                <div className="font-medium text-xs sm:text-sm text-white truncate group-hover:text-gold-300 transition-colors">
-                  {formatDisplayDate(checkIn) || (
-                    <span className="text-white/40 italic text-xs">Pilih di kalender</span>
-                  )}
-                </div>
-              </div>
+              {/* Tanggal Kedatangan & Keberangkatan (Grid 2 Kolom) */}
+              <div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div
+                    onClick={() => {
+                      clearFieldError('checkIn');
+                      setMobileTab('calendar');
+                    }}
+                    className={`border p-3 rounded-xl cursor-pointer transition-colors group ${
+                      formErrors.checkIn
+                        ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
+                        : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-gold-400/40'
+                    }`}
+                    title="Ketuk untuk ubah tanggal di kalender"
+                  >
+                    <div className="text-[10px] font-bold text-gold-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <span>Check-in</span>
+                        <span className="text-[9px] text-white/40 font-normal lg:hidden">(ubah)</span>
+                      </span>
+                      {checkIn && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCheckIn(null);
+                            setCheckOut(null);
+                          }}
+                          className="text-[9px] text-white/40 hover:text-gold-300 underline lowercase"
+                        >
+                          reset
+                        </button>
+                      )}
+                    </div>
+                    <div className="font-medium text-xs sm:text-sm text-white truncate group-hover:text-gold-300 transition-colors">
+                      {formatDisplayDate(checkIn) || (
+                        <span className="text-white/40 italic text-xs">Pilih di kalender</span>
+                      )}
+                    </div>
+                  </div>
 
-              <div
-                onClick={() => setMobileTab('calendar')}
-                className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-gold-400/40 p-3 rounded-xl cursor-pointer transition-colors group"
-                title="Ketuk untuk ubah tanggal di kalender"
-              >
-                <div className="text-[10px] font-bold text-gold-400 uppercase tracking-wider mb-1 flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <span>Check-out</span>
-                    <span className="text-[9px] text-white/40 font-normal lg:hidden">(ubah)</span>
-                  </span>
-                  {checkOut && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCheckOut(null);
-                      }}
-                      className="text-[9px] text-white/40 hover:text-gold-300 underline lowercase"
-                    >
-                      ubah
-                    </button>
-                  )}
+                  <div
+                    onClick={() => {
+                      clearFieldError('checkOut');
+                      setMobileTab('calendar');
+                    }}
+                    className={`border p-3 rounded-xl cursor-pointer transition-colors group ${
+                      formErrors.checkOut
+                        ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
+                        : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-gold-400/40'
+                    }`}
+                    title="Ketuk untuk ubah tanggal di kalender"
+                  >
+                    <div className="text-[10px] font-bold text-gold-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <span>Check-out</span>
+                        <span className="text-[9px] text-white/40 font-normal lg:hidden">(ubah)</span>
+                      </span>
+                      {checkOut && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCheckOut(null);
+                          }}
+                          className="text-[9px] text-white/40 hover:text-gold-300 underline lowercase"
+                        >
+                          ubah
+                        </button>
+                      )}
+                    </div>
+                    <div className="font-medium text-xs sm:text-sm text-white truncate group-hover:text-gold-300 transition-colors">
+                      {formatDisplayDate(checkOut) || (
+                        <span className="text-white/40 italic text-xs">Pilih di kalender</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="font-medium text-xs sm:text-sm text-white truncate group-hover:text-gold-300 transition-colors">
-                  {formatDisplayDate(checkOut) || (
-                    <span className="text-white/40 italic text-xs">Pilih di kalender</span>
-                  )}
-                </div>
+
+                {/* Pesan error tanggal jika ada */}
+                {(formErrors.checkIn || formErrors.checkOut) && (
+                  <p className="text-[11px] text-red-400 mt-1.5 flex items-center gap-1 font-medium animate-fade-in">
+                    <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                    <span>{formErrors.checkIn || formErrors.checkOut}</span>
+                  </p>
+                )}
               </div>
-            </div>
 
             {/* Jumlah Tamu (Dewasa & Anak Side by Side) - Hanya tampil jika diizinkan di admin panel */}
             {allowGuestSelection && (
@@ -960,11 +1071,23 @@ export default function OnlineBookingModal({
                   <input
                     type="text"
                     value={guestName}
-                    onChange={(e) => setGuestName(e.target.value)}
+                    onChange={(e) => {
+                      setGuestName(e.target.value);
+                      clearFieldError('guestName');
+                    }}
                     placeholder="Contoh: Budi Santoso"
-                    required
-                    className="w-full bg-charcoal-900 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:border-gold-400 transition-colors"
+                    className={`w-full bg-charcoal-900 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors border ${
+                      formErrors.guestName
+                        ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
+                        : 'border-white/20 focus:border-gold-400'
+                    }`}
                   />
+                  {formErrors.guestName && (
+                    <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1 font-medium animate-fade-in">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                      <span>{formErrors.guestName}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -974,14 +1097,27 @@ export default function OnlineBookingModal({
                   <input
                     type="tel"
                     value={guestPhone}
-                    onChange={(e) => setGuestPhone(e.target.value)}
+                    onChange={(e) => {
+                      setGuestPhone(e.target.value);
+                      clearFieldError('guestPhone');
+                    }}
                     placeholder="Contoh: 081234567890"
-                    required
-                    className="w-full bg-charcoal-900 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:border-gold-400 transition-colors"
+                    className={`w-full bg-charcoal-900 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors border ${
+                      formErrors.guestPhone
+                        ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
+                        : 'border-white/20 focus:border-gold-400'
+                    }`}
                   />
-                  <span className="text-[10px] text-white/40 mt-0.5 block">
-                    Konfirmasi booking & invoice dikirim ke WA ini
-                  </span>
+                  {formErrors.guestPhone ? (
+                    <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1 font-medium animate-fade-in">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                      <span>{formErrors.guestPhone}</span>
+                    </p>
+                  ) : (
+                    <span className="text-[10px] text-white/40 mt-0.5 block">
+                      Konfirmasi booking &amp; invoice dikirim ke WA ini
+                    </span>
+                  )}
                 </div>
 
                 <div>
@@ -991,11 +1127,23 @@ export default function OnlineBookingModal({
                   <input
                     type="email"
                     value={guestEmail}
-                    onChange={(e) => setGuestEmail(e.target.value)}
+                    onChange={(e) => {
+                      setGuestEmail(e.target.value);
+                      clearFieldError('guestEmail');
+                    }}
                     placeholder="nama@email.com"
-                    required
-                    className="w-full bg-charcoal-900 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:border-gold-400 transition-colors"
+                    className={`w-full bg-charcoal-900 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors border ${
+                      formErrors.guestEmail
+                        ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
+                        : 'border-white/20 focus:border-gold-400'
+                    }`}
                   />
+                  {formErrors.guestEmail && (
+                    <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1 font-medium animate-fade-in">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                      <span>{formErrors.guestEmail}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1018,7 +1166,10 @@ export default function OnlineBookingModal({
                   </label>
                   <CustomSelect
                     value={eventType}
-                    onChange={(val) => setEventType(val)}
+                    onChange={(val) => {
+                      setEventType(val);
+                      clearFieldError('eventType');
+                    }}
                     size="sm"
                     options={[
                       { value: 'Acara Keluarga', label: 'Acara Keluarga' },
@@ -1029,14 +1180,28 @@ export default function OnlineBookingModal({
                     ]}
                   />
                   {eventType === 'Lainnya' && (
-                    <input
-                      type="text"
-                      value={eventTypeOther}
-                      onChange={(e) => setEventTypeOther(e.target.value)}
-                      placeholder="Sebutkan keperluan acara / menginap..."
-                      required
-                      className="w-full mt-2 bg-charcoal-900 border border-gold-500/50 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:border-gold-400 transition-colors"
-                    />
+                    <div>
+                      <input
+                        type="text"
+                        value={eventTypeOther}
+                        onChange={(e) => {
+                          setEventTypeOther(e.target.value);
+                          clearFieldError('eventTypeOther');
+                        }}
+                        placeholder="Sebutkan keperluan acara / menginap..."
+                        className={`w-full mt-2 bg-charcoal-900 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors border ${
+                          formErrors.eventTypeOther
+                            ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
+                            : 'border-gold-500/50 focus:border-gold-400'
+                        }`}
+                      />
+                      {formErrors.eventTypeOther && (
+                        <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1 font-medium animate-fade-in">
+                          <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                          <span>{formErrors.eventTypeOther}</span>
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -1077,7 +1242,10 @@ export default function OnlineBookingModal({
                     <input
                       type="checkbox"
                       checked={agreedTerms}
-                      onChange={(e) => setAgreedTerms(e.target.checked)}
+                      onChange={(e) => {
+                        setAgreedTerms(e.target.checked);
+                        clearFieldError('agreedTerms');
+                      }}
                       className="mt-0.5 rounded border-white/30 bg-charcoal-900 text-gold-500 focus:ring-gold-400 w-4 h-4 cursor-pointer"
                     />
                     <span className="text-[11px] text-white/80 group-hover:text-white transition-colors leading-relaxed">
@@ -1094,17 +1262,24 @@ export default function OnlineBookingModal({
                       menginap di {villa.name || 'villa'}.
                     </span>
                   </label>
+                  {formErrors.agreedTerms && (
+                    <p className="text-[11px] text-red-400 mt-1.5 flex items-center gap-1 font-medium animate-fade-in">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                      <span>{formErrors.agreedTerms}</span>
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Tombol Aksi Booking */}
-            <div className="pt-2">
+          {/* ================= FIXED / FLOATING STICKY BOTTOM ACTION BAR ================= */}
+            <div className="p-3.5 sm:p-4 bg-charcoal-950/95 backdrop-blur-xl border-t border-white/15 flex-shrink-0 z-30 shadow-[0_-8px_25px_rgba(0,0,0,0.5)]">
               {/* Tombol kembali ke kalender di versi mobile */}
               <button
                 type="button"
                 onClick={() => setMobileTab('calendar')}
-                className="lg:hidden w-full mb-3 py-2.5 px-3 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-xs text-gold-300 font-medium flex items-center justify-center gap-1.5 transition-colors"
+                className="lg:hidden w-full mb-2.5 py-1.5 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[11px] text-gold-300 font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <CalendarIcon className="w-3.5 h-3.5 text-gold-400" />
                 <span>&larr; Lihat / Ubah Tanggal di Kalender</span>
@@ -1113,7 +1288,7 @@ export default function OnlineBookingModal({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 disabled:opacity-50 disabled:cursor-not-allowed text-charcoal-950 font-bold py-3 px-4 rounded-xl tracking-wider text-xs uppercase transition-all duration-300 transform active:scale-95 shadow-lg shadow-gold-500/20 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 disabled:opacity-50 disabled:cursor-not-allowed text-charcoal-950 font-bold py-3.5 px-4 rounded-xl tracking-wider text-xs uppercase transition-all duration-300 transform active:scale-[0.98] shadow-lg shadow-gold-500/25 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
@@ -1122,25 +1297,30 @@ export default function OnlineBookingModal({
                   </>
                 ) : (
                   <>
-                    <span>BUAT RESERVASI & LANJUT KE PEMBAYARAN</span>
+                    <span>BUAT RESERVASI &amp; LANJUT KE PEMBAYARAN</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
 
-              <Link
-                href="/cek-booking"
-                onClick={triggerClose}
-                className="block text-center text-xs text-white/50 hover:text-gold-400 transition-colors mt-2.5 underline underline-offset-4"
-              >
-                Cek Status / Kelola Reservasi Sebelumnya
-              </Link>
+              <div className="flex items-center justify-between mt-2 px-1 text-[11px] text-white/50">
+                <span className="truncate flex items-center gap-1 text-[10.5px]">
+                  <CheckCircle2 className="w-3 h-3 text-gold-400 flex-shrink-0" />
+                  Konfirmasi Instan via WhatsApp
+                </span>
+                <Link
+                  href="/cek-booking"
+                  onClick={triggerClose}
+                  className="text-[10.5px] text-white/50 hover:text-gold-400 transition-colors underline whitespace-nowrap"
+                >
+                  Cek Reservasi
+                </Link>
+              </div>
             </div>
           </form>
         </div>
       </div>
     </div>
-  </div>
   );
 }
 

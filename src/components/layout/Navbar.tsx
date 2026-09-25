@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Calendar, Phone, Menu, X, Compass } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import OnlineBookingModal from '@/components/booking/OnlineBookingModal';
 import { useVilla } from '@/context/VillaContext';
 import { resolveMediaUrl } from '@/lib/utils/api';
@@ -122,77 +123,111 @@ export default function Navbar() {
           {/* Mobile Menu Toggle Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="md:hidden text-white p-2 rounded-xl hover:bg-white/10 active:scale-95 transition-all focus:outline-none"
             aria-label="Toggle Menu"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <motion.div
+              animate={{ rotate: mobileMenuOpen ? 90 : 0 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6 text-gold-400" /> : <Menu className="w-6 h-6" />}
+            </motion.div>
           </button>
         </div>
 
-        {/* Mobile Drawer */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-charcoal-900 border-b border-white/10 px-6 py-6 animate-fade-in text-white space-y-4">
-            <Link
-              href="/#about"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block text-base font-medium py-2 border-b border-white/5 hover:text-gold-400"
-            >
-              Tentang Villa
-            </Link>
-            <Link
-              href="/#gallery"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block text-base font-medium py-2 border-b border-white/5 hover:text-gold-400"
-            >
-              Galeri Foto
-            </Link>
-            <Link
-              href="/#facilities"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block text-base font-medium py-2 border-b border-white/5 hover:text-gold-400"
-            >
-              Fasilitas
-            </Link>
-            <Link
-              href="/#location"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block text-base font-medium py-2 border-b border-white/5 hover:text-gold-400"
-            >
-              Lokasi
-            </Link>
-            <Link
-              href="/cek-booking"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 text-base font-semibold py-2 text-gold-400"
-            >
-              <Compass className="w-5 h-5" />
-              Cek Status Reservasi
-            </Link>
-            <div className="pt-2 space-y-2">
-              <a
-                href={`https://wa.me/${waPhone}`}
-                target="_blank"
-                rel="noopener noreferrer"
+        {/* Animated Mobile Drawer & Backdrop */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <>
+              {/* Dimmed Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="fixed inset-0 top-[64px] z-40 bg-black/65 backdrop-blur-sm md:hidden"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white py-2.5 rounded-full font-semibold text-xs tracking-wider transition-colors text-decoration-none"
+              />
+
+              {/* Slide Down Mobile Menu Drawer */}
+              <motion.div
+                initial={{ opacity: 0, y: -16, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: -12, height: 0 }}
+                transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+                className="overflow-hidden md:hidden bg-charcoal-950/95 backdrop-blur-2xl border-b border-white/15 px-6 py-6 text-white shadow-2xl relative z-50"
               >
-                <Phone className="w-3.5 h-3.5 text-gold-400" />
-                <span>WhatsApp: {displayPhone}</span>
-              </a>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setIsBookingModalOpen(true);
-                }}
-                className="w-full flex items-center justify-center gap-2 bg-gold-500 text-charcoal-950 py-3 rounded-full font-bold uppercase text-xs tracking-wider cursor-pointer"
-              >
-                <Calendar className="w-4 h-4" />
-                <span>Reservasi Villa Sekarang</span>
-              </button>
-            </div>
-          </div>
-        )}
+                <div className="space-y-3">
+                  {[
+                    { href: '/#about', label: 'Tentang Villa' },
+                    { href: '/#gallery', label: 'Galeri Foto' },
+                    { href: '/#facilities', label: 'Fasilitas' },
+                    { href: '/#location', label: 'Lokasi' },
+                  ].map((item, idx) => (
+                    <motion.div
+                      key={item.href}
+                      initial={{ opacity: 0, x: -16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.05 * idx + 0.05, duration: 0.25 }}
+                    >
+                      <Link
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block text-base font-medium py-2.5 px-3 rounded-xl border-b border-white/5 hover:bg-white/5 hover:text-gold-400 active:scale-[0.99] transition-all"
+                      >
+                        {item.label}
+                      </Link>
+                    </motion.div>
+                  ))}
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.25, duration: 0.25 }}
+                  >
+                    <Link
+                      href="/cek-booking"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2.5 text-base font-semibold py-2.5 px-3 rounded-xl bg-gold-500/10 border border-gold-400/20 text-gold-300 hover:text-gold-200 active:scale-[0.99] transition-all"
+                    >
+                      <Compass className="w-5 h-5 text-gold-400" />
+                      <span>Cek Status Reservasi</span>
+                    </Link>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.25 }}
+                    className="pt-3 space-y-2.5"
+                  >
+                    <a
+                      href={`https://wa.me/${waPhone}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white py-3 rounded-full font-semibold text-xs tracking-wider transition-all active:scale-[0.98] text-decoration-none"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-gold-400" />
+                      <span>WhatsApp: {displayPhone}</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setIsBookingModalOpen(true);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-charcoal-950 py-3.5 rounded-full font-bold uppercase text-xs tracking-wider cursor-pointer shadow-lg shadow-gold-500/20 active:scale-[0.98] transition-all"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      <span>Reservasi Villa Sekarang</span>
+                    </button>
+                  </motion.div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Online Booking Calendar Modal */}
