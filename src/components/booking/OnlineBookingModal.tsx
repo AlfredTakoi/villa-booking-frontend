@@ -703,7 +703,7 @@ export default function OnlineBookingModal({
           </div>
 
           {/* Dedicated Scrollable Form Body */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5 lg:p-6">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5 lg:p-6 pb-24">
             <form onSubmit={handleProceedBooking} className="space-y-4">
               {/* Alert banner jika ada validasi / error */}
               {alertMessage && (
