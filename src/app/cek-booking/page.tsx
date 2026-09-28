@@ -68,9 +68,8 @@ export default function CheckBookingPage() {
     };
   }, []);
 
-  const getTomorrowString = () => {
+  const getTodayString = () => {
     const d = new Date();
-    d.setDate(d.getDate() + 1);
     return d.toISOString().split('T')[0];
   };
 
@@ -598,7 +597,7 @@ export default function CheckBookingPage() {
                     </div>
                     <CustomDatePicker
                       value={newCheckIn}
-                      minDate={getTomorrowString()}
+                      minDate={getTodayString()}
                       onChange={(val) => {
                         setNewCheckIn(val);
                         if (result?.total_nights) {
@@ -621,7 +620,7 @@ export default function CheckBookingPage() {
                     </div>
                     <CustomDatePicker
                       value={newCheckOut}
-                      minDate={getTomorrowString()}
+                      minDate={getTodayString()}
                       onChange={(val) => {
                         setNewCheckOut(val);
                         if (result?.total_nights) {
