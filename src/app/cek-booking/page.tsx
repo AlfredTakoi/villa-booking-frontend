@@ -557,7 +557,7 @@ export default function CheckBookingPage() {
               <ul className="list-disc list-inside space-y-1 text-white/80 pl-1 text-[11px] leading-relaxed">
                 <li>Pengajuan maksimal <strong>10 hari sebelum tanggal check-in (H-10)</strong>.</li>
                 <li>Setiap reservasi hanya memiliki kuota <strong>1x reschedule</strong>.</li>
-                <li>Durasi menginap tetap <strong>{result.total_nights} malam</strong> (total tagihan &amp; DP tetap sah).</li>
+                <li>Bebas memilih tanggal &amp; durasi menginap baru (minimal 1 malam atau lebih).</li>
                 <li>Tanggal baru tidak boleh bentrok dengan reservasi tamu lain.</li>
               </ul>
             </div>
@@ -600,8 +600,8 @@ export default function CheckBookingPage() {
                       minDate={getTodayString()}
                       onChange={(val) => {
                         setNewCheckIn(val);
-                        if (result?.total_nights) {
-                          setNewCheckOut(calculateCheckOut(val, result.total_nights));
+                        if (!newCheckOut || newCheckOut <= val) {
+                          setNewCheckOut(calculateCheckOut(val, result?.total_nights || 1));
                         }
                         setRescheduleError('');
                       }}
@@ -620,11 +620,11 @@ export default function CheckBookingPage() {
                     </div>
                     <CustomDatePicker
                       value={newCheckOut}
-                      minDate={getTodayString()}
+                      minDate={newCheckIn || getTodayString()}
                       onChange={(val) => {
                         setNewCheckOut(val);
-                        if (result?.total_nights) {
-                          setNewCheckIn(calculateCheckIn(val, result.total_nights));
+                        if (!newCheckIn || val <= newCheckIn) {
+                          setNewCheckIn(calculateCheckIn(val, result?.total_nights || 1));
                         }
                         setRescheduleError('');
                       }}
@@ -634,14 +634,27 @@ export default function CheckBookingPage() {
                   </div>
                 </div>
 
-                {/* Duration locked badge */}
-                <div className="flex items-center justify-between px-3.5 py-2.5 bg-gold-500/10 border border-gold-500/20 rounded-xl text-xs text-gold-300">
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-gold-400" />
-                    <span>Durasi Menginap Terkunci:</span>
-                  </span>
-                  <span className="text-white font-bold">{result.total_nights} Malam (Tarif Tetap Sah)</span>
-                </div>
+                {/* Duration badge */}
+                {(() => {
+                  const nights = (newCheckIn && newCheckOut)
+                    ? Math.max(1, Math.round((new Date(newCheckOut).getTime() - new Date(newCheckIn).getTime()) / (1000 * 60 * 60 * 24)))
+                    : (result.total_nights || 1);
+                  const diff = nights - result.total_nights;
+                  return (
+                    <div className="flex items-center justify-between px-3.5 py-2.5 bg-gold-500/10 border border-gold-500/20 rounded-xl text-xs text-gold-300">
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-gold-400" />
+                        <span>Durasi Jadwal Baru:</span>
+                      </span>
+                      <span className="text-white font-bold">
+                        {nights} Malam
+                        {diff > 0 && <span className="text-gold-400 font-normal ml-1">(+{diff} malam dari awal)</span>}
+                        {diff < 0 && <span className="text-gold-400 font-normal ml-1">({diff} malam dari awal)</span>}
+                        {diff === 0 && <span className="text-white/60 font-normal ml-1">(Sama dengan durasi awal)</span>}
+                      </span>
+                    </div>
+                  );
+                })()}
 
                 {/* Reason */}
                 <div>
