@@ -70,20 +70,25 @@ export function resolveMediaUrl(url?: string | null, fallback = '/villa-logo.png
     return `https:${target}`;
   }
 
-  // Database stored path from Laragon local: /booking-app/uploads/...
-  if (target.startsWith('/booking-app/uploads/')) {
-    return `${BACKEND_BASE_URL}${target.replace('/booking-app', '')}`;
-  }
-  if (target.startsWith('booking-app/uploads/')) {
-    return `${BACKEND_BASE_URL}/${target.replace('booking-app/', '')}`;
+  // Backend uploads: matches /villa-admin/uploads/..., /booking-app/uploads/..., /uploads/..., uploads/...
+  const uploadsMatch = target.match(/(?:^|\/)(uploads\/[^\s]+)/);
+  if (uploadsMatch) {
+    const uploadPath = uploadsMatch[1];
+    return `${BACKEND_BASE_URL}/${uploadPath}`;
   }
 
-  // Backend uploads: /uploads/...
-  if (target.startsWith('/uploads/')) {
-    return `${BACKEND_BASE_URL}${target}`;
+  // Backend app assets: matches /villa-admin/app_asset/..., /booking-app/app_asset/..., app_asset/...
+  const appAssetMatch = target.match(/(?:^|\/)(app_asset\/[^\s]+)/);
+  if (appAssetMatch) {
+    const assetPath = appAssetMatch[1];
+    return `${BACKEND_BASE_URL}/${assetPath}`;
   }
-  if (target.startsWith('uploads/')) {
-    return `${BACKEND_BASE_URL}/${target}`;
+
+  // Backend file-upload render: matches /villa-admin/file-upload/..., file-upload/...
+  const fileUploadMatch = target.match(/(?:^|\/)(file-upload\/[^\s]+)/);
+  if (fileUploadMatch) {
+    const fileUploadPath = fileUploadMatch[1];
+    return `${BACKEND_BASE_URL}/${fileUploadPath}`;
   }
 
   // Static assets located in Next.js public/ directory: prefix with FRONTEND_BASE_PATH
