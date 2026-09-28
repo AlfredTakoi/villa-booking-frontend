@@ -78,6 +78,7 @@ export interface RateSeasonItem {
   start_date?: string;
   end_date?: string;
   is_weekend?: boolean;
+  notes?: string;
 }
 
 export interface GalleryCategoryItem {

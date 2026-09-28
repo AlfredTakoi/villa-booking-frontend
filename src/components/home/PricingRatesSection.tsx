@@ -13,26 +13,32 @@ function formatRupiah(amount: number | string): string {
 export default function PricingRatesSection() {
   const { villa, rateSeasons, facilities } = useVilla();
 
-  const basePriceFormatted = formatRupiah(villa.base_price || 2700000);
   const maxGuests = villa.max_guests || 20;
 
-  // 1. Jumat & Minggu
-  const friSunSeason = rateSeasons.find(r => {
+  // Bangun daftar tarif lengkap secara dinamis dari /api/villa (rate_seasons) tanpa filter variabel manual
+  const hasWeekdayInSeasons = rateSeasons.some(r => {
     const sName = (r.name || r.season_name || '').toLowerCase();
-    return sName.includes('jumat') || sName.includes('minggu');
+    return sName.includes('senin') || sName.includes('weekday');
   });
-  const friSunPriceFormatted = friSunSeason && Number(friSunSeason.price) > 0
-    ? formatRupiah(friSunSeason.price)
-    : '3.000.000';
 
-  // 2. Sabtu (Weekend)
-  const satSeason = rateSeasons.find(r => {
-    const sName = (r.name || r.season_name || '').toLowerCase();
-    return sName.includes('sabtu');
-  });
-  const satPriceFormatted = satSeason && Number(satSeason.price) > 0
-    ? formatRupiah(satSeason.price)
-    : '4.200.000';
+  const displayRateSeasons = [
+    ...(!hasWeekdayInSeasons
+      ? [
+          {
+            id: 'base-weekday',
+            name: 'Senin – Kamis',
+            price: Number(villa.base_price || 2700000),
+            notes: '',
+          },
+        ]
+      : []),
+    ...rateSeasons.map((r, idx) => ({
+      id: r.id || `rs-${idx}`,
+      name: r.name || r.season_name || 'Tarif Khusus',
+      price: Number(r.price || 0),
+      notes: r.notes || '',
+    })),
+  ];
 
   const rateInclusions = facilities.filter(f => f.is_included_in_rate);
 
@@ -89,51 +95,29 @@ export default function PricingRatesSection() {
               Berikut merupakan harga sewa villa {villa.name || 'Casa Anandefa'} yang berlokasi di Cisarua, Puncak Bogor.
             </p>
 
-            {/* 4 Rate Cards Grid */}
+            {/* Rate Cards Grid - Looping dinamis dari data rate_seasons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto">
-              {/* 1. Senin – Kamis */}
-              <div className="flex flex-col items-center">
-                <div className="relative bg-gradient-to-r from-amber-600 to-amber-700 text-white font-semibold text-xs sm:text-sm px-6 py-2 rounded-md shadow-md mb-3.5 inline-block">
-                  Senin – Kamis
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-amber-700"></div>
-                </div>
-                <div className="font-serif text-base sm:text-lg font-bold text-white tracking-wide" suppressHydrationWarning>
-                  IDR {basePriceFormatted} <span className="text-xs font-sans font-normal text-white/70">/ Malam</span>
-                </div>
-              </div>
-
-              {/* 2. Jumat & Minggu */}
-              <div className="flex flex-col items-center">
-                <div className="relative bg-gradient-to-r from-amber-600 to-amber-700 text-white font-semibold text-xs sm:text-sm px-6 py-2 rounded-md shadow-md mb-3.5 inline-block">
-                  Jumat &amp; Minggu
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-amber-700"></div>
-                </div>
-                <div className="font-serif text-base sm:text-lg font-bold text-white tracking-wide" suppressHydrationWarning>
-                  IDR {friSunPriceFormatted} <span className="text-xs font-sans font-normal text-white/70">/ Malam</span>
-                </div>
-              </div>
-
-              {/* 3. Sabtu (Weekend) */}
-              <div className="flex flex-col items-center">
-                <div className="relative bg-gradient-to-r from-amber-600 to-amber-700 text-white font-semibold text-xs sm:text-sm px-6 py-2 rounded-md shadow-md mb-3.5 inline-block">
-                  Sabtu (Weekend)
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-amber-700"></div>
-                </div>
-                <div className="font-serif text-base sm:text-lg font-bold text-white tracking-wide" suppressHydrationWarning>
-                  IDR {satPriceFormatted} <span className="text-xs font-sans font-normal text-white/70">/ Malam</span>
-                </div>
-              </div>
-
-              {/* 4. Hari Libur Nasional */}
-              <div className="flex flex-col items-center">
-                <div className="relative bg-gradient-to-r from-amber-600 to-amber-700 text-white font-semibold text-xs sm:text-sm px-6 py-2 rounded-md shadow-md mb-3.5 inline-block">
-                  Hari Libur Nasional
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-amber-700"></div>
-                </div>
-                <div className="text-xs sm:text-sm font-medium text-white/90 leading-tight max-w-[200px]">
-                  Harga Menyesuaikan dengan Kondisi
-                </div>
-              </div>
+              {displayRateSeasons.map((season) => {
+                const hasPrice = Number(season.price) > 0;
+                return (
+                  <div key={season.id} className="flex flex-col items-center">
+                    <div className="relative bg-gradient-to-r from-amber-600 to-amber-700 text-white font-semibold text-xs sm:text-sm px-6 py-2 rounded-md shadow-md mb-3.5 inline-block text-center">
+                      {season.name}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-amber-700"></div>
+                    </div>
+                    {hasPrice ? (
+                      <div className="font-serif text-base sm:text-lg font-bold text-white tracking-wide" suppressHydrationWarning>
+                        IDR {formatRupiah(season.price)}{' '}
+                        <span className="text-xs font-sans font-normal text-white/70">/ Malam</span>
+                      </div>
+                    ) : (
+                      <div className="text-xs sm:text-sm font-medium text-white/90 leading-tight max-w-[200px] text-center">
+                        {season.notes || 'Harga Menyesuaikan dengan Kondisi'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
