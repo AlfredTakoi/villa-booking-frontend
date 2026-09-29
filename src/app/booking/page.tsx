@@ -52,6 +52,7 @@ function BookingPaymentContent() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadSuccess, setUploadSuccess] = useState<boolean>(false);
+  const [showUploadSuccessModal, setShowUploadSuccessModal] = useState<boolean>(false);
   const [isReuploading, setIsReuploading] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string>('');
 
@@ -176,6 +177,7 @@ function BookingPaymentContent() {
       if (result.success) {
         setUploadSuccess(true);
         setIsReuploading(false);
+        setShowUploadSuccessModal(true);
 
         const uploadedUrl = result.data?.proof_image_url || result.data?.proof_url || previewUrl;
         setBookingData((prev: any) => ({
@@ -810,6 +812,64 @@ function BookingPaymentContent() {
                   </button>
                 </form>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Dialog Notifikasi Berhasil Upload Bukti Pembayaran */}
+      {showUploadSuccessModal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-emerald-200 text-center space-y-5 animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto border-2 border-emerald-300">
+              <CheckCircle2 className="w-9 h-9" />
+            </div>
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
+                ✓ Upload Berhasil
+              </span>
+              <h3 className="font-serif text-xl sm:text-2xl font-bold text-charcoal-900 mt-3">
+                Bukti Pembayaran Berhasil Diunggah!
+              </h3>
+              <p className="text-xs text-charcoal-800/70 mt-2 leading-relaxed">
+                Terima kasih! Bukti transfer untuk reservasi <strong>{code}</strong> telah kami terima. Tim manajemen kami akan segera memverifikasi mutasi bank Anda dalam waktu maksimal 2 jam kerja.
+              </p>
+            </div>
+
+            <div className="p-3.5 bg-sand-50 rounded-xl border border-sand-300 text-left text-xs space-y-1.5">
+              <div className="flex justify-between">
+                <span className="text-charcoal-800/60">Bank Pengirim:</span>
+                <span className="font-bold text-charcoal-900">{bankName || '-'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-charcoal-800/60">Atas Nama:</span>
+                <span className="font-bold text-charcoal-900">{accountHolder || '-'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-charcoal-800/60">Nominal:</span>
+                <span className="font-bold text-emerald-700">Rp {Number(transferredAmount || 0).toLocaleString('id-ID')}</span>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-sand-200">
+                <span className="text-charcoal-800/60">Status Sekarang:</span>
+                <span className="font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded text-[11px]">Menunggu Verifikasi Admin</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <Link
+                href={`/cek-booking?code=${encodeURIComponent(code)}`}
+                className="w-full py-3 px-4 rounded-xl font-bold text-xs bg-gold-600 hover:bg-gold-700 text-white shadow-sm transition-all flex items-center justify-center gap-2 group"
+              >
+                <span>Pantau Status di Cek Booking</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setShowUploadSuccessModal(false)}
+                className="w-full py-2.5 px-4 rounded-xl font-medium text-xs text-charcoal-800/80 hover:bg-sand-100 transition-colors"
+              >
+                Tutup / Selesai
+              </button>
             </div>
           </div>
         </div>

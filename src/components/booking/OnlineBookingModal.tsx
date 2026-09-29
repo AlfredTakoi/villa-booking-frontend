@@ -11,6 +11,8 @@ import {
   Users,
   ArrowRight,
   CheckCircle2,
+  Check,
+  Copy,
   Calendar as CalendarIcon,
   Clock,
 } from 'lucide-react';
@@ -154,6 +156,12 @@ export default function OnlineBookingModal({
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
+  // Success Feedback State
+  const [bookingSuccessCode, setBookingSuccessCode] = useState<string | null>(null);
+  const [countdownRedirect, setCountdownRedirect] = useState<number>(4);
+  const [isCopiedCode, setIsCopiedCode] = useState<boolean>(false);
+
+
   // Helper untuk membersihkan error spesifik saat user mulai mengetik/mengubah nilai
   const clearFieldError = (field: string) => {
     setFormErrors((prev) => {
@@ -202,6 +210,23 @@ export default function OnlineBookingModal({
       onClose();
     }, 300);
   }, [onClose]);
+ 
+  // Auto redirect countdown when booking is successful
+  useEffect(() => {
+    if (!bookingSuccessCode) return;
+    const timer = setInterval(() => {
+      setCountdownRedirect((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          triggerClose();
+          router.push(`/booking?code=${bookingSuccessCode}`);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [bookingSuccessCode, triggerClose, router]);
 
   // Close on Escape key
   useEffect(() => {
@@ -527,8 +552,8 @@ export default function OnlineBookingModal({
       const result = await res.json();
 
       if (result.success && result.data?.booking_code) {
-        triggerClose();
-        router.push(`/booking?code=${result.data.booking_code}`);
+        setBookingSuccessCode(result.data.booking_code);
+        setCountdownRedirect(4);
       } else {
         setAlertMessage(result.message || 'Gagal memproses reservasi. Silakan periksa kembali data Anda.');
       }
@@ -556,7 +581,74 @@ export default function OnlineBookingModal({
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ================= MOBILE NAVIGATION TABS (Visible only on < lg) ================= */}
+        {bookingSuccessCode ? (
+          <div className="w-full h-full flex flex-col items-center justify-center p-6 sm:p-12 text-center bg-white overflow-y-auto">
+            <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-5 shadow-sm border border-emerald-300 animate-in zoom-in duration-300">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700 bg-emerald-100 px-3.5 py-1.5 rounded-full mb-3">
+              ✓ Reservasi Berhasil Dibuat
+            </span>
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-charcoal-900 mb-2">
+              Pemesanan Anda Berhasil!
+            </h2>
+            <p className="text-xs sm:text-sm text-charcoal-800/75 max-w-md mx-auto mb-6 leading-relaxed">
+              Terima kasih telah memesan di <strong>{villa.name || 'Villa Casa Anandefa'}</strong>. Rincian reservasi dan tagihan telah dicatat di sistem serta dikirimkan otomatis ke WhatsApp &amp; Email Anda.
+            </p>
+            <div className="p-4 sm:p-5 bg-sand-50 rounded-2xl border border-sand-300 max-w-sm w-full mx-auto mb-5 shadow-sm">
+              <div className="text-[11px] text-charcoal-800/60 uppercase tracking-wider font-semibold mb-1">
+                KODE RESERVASI ANDA
+              </div>
+              <div className="flex items-center justify-center gap-3">
+                <span className="font-mono text-xl sm:text-2xl font-bold text-gold-700 tracking-wider">
+                  {bookingSuccessCode}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(bookingSuccessCode);
+                    setIsCopiedCode(true);
+                    setTimeout(() => setIsCopiedCode(false), 2000);
+                  }}
+                  className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-gold-100 hover:bg-gold-200 text-gold-800 font-bold transition-colors"
+                >
+                  {isCopiedCode ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-700">Disalin</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Salin</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+            <div className="text-xs text-charcoal-800/60 mb-6 flex items-center justify-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-gold-600" />
+              <span>
+                Mengalihkan ke halaman pembayaran dalam <strong className="text-charcoal-900 font-bold">{countdownRedirect} detik</strong>...
+              </span>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerClose();
+                  router.push(`/booking?code=${bookingSuccessCode}`);
+                }}
+                className="w-full py-3.5 px-6 rounded-xl font-bold text-xs uppercase tracking-wider bg-gold-600 hover:bg-gold-700 text-white shadow-md transition-all flex items-center justify-center gap-2 group"
+              >
+                <span>Lanjut ke Upload Pembayaran</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* ================= MOBILE NAVIGATION TABS (Visible only on < lg) ================= */}
         <div className="lg:hidden flex items-center justify-between px-3 sm:px-4 py-2.5 bg-charcoal-950 border-b border-white/10 z-30 flex-shrink-0">
           <div className="flex items-center gap-1.5 bg-white/10 p-1 rounded-xl">
             <button
@@ -1319,6 +1411,8 @@ export default function OnlineBookingModal({
             </div>
           </form>
         </div>
+        </>
+        )}
       </div>
     </div>
   );
