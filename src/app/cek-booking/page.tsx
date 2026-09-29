@@ -22,6 +22,7 @@ import {
   X,
   Loader2,
   CalendarDays,
+  UploadCloud,
 } from 'lucide-react';
 import { useVilla } from '@/context/VillaContext';
 
@@ -468,12 +469,12 @@ export default function CheckBookingPage() {
               )}
 
               {/* Action Buttons based on status */}
-              <div className="pt-4 border-t border-sand-200 flex flex-wrap gap-4">
+              <div className="pt-4 border-t border-sand-200 flex flex-col gap-4">
                 {result.status === 'confirmed' && (
                   <a
                     href={`/api/invoices/download?code=${result.booking_code}`}
                     target="_blank"
-                    className="inline-flex items-center gap-2 bg-charcoal-900 hover:bg-charcoal-850 text-white px-6 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
+                    className="inline-flex items-center gap-2 bg-charcoal-900 hover:bg-charcoal-850 text-white px-6 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md self-start"
                   >
                     <Download className="w-4 h-4 text-gold-400" />
                     <span>Unduh Dokumen Invoice (PDF)</span>
@@ -483,7 +484,7 @@ export default function CheckBookingPage() {
                 {result.status === 'pending_payment' && (
                   <Link
                     href={`/booking?code=${result.booking_code}`}
-                    className="inline-flex items-center gap-2 bg-gradient-to-r from-gold-500 to-gold-600 text-charcoal-950 px-6 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-gold-500 to-gold-600 text-charcoal-950 px-6 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md self-start"
                   >
                     <span>Lanjut ke Instruksi Pembayaran & Upload Bukti</span>
                     <ArrowRight className="w-4 h-4" />
@@ -493,11 +494,40 @@ export default function CheckBookingPage() {
                 {result.status === 'waiting_confirmation' && (
                   <Link
                     href={`/booking?code=${result.booking_code}`}
-                    className="inline-flex items-center gap-2 bg-amber-500 text-white px-6 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
+                    className="inline-flex items-center gap-2 bg-amber-500 text-white px-6 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md self-start"
                   >
                     <span>Lihat Bukti Transfer yang Telah Diunggah</span>
                     <ArrowRight className="w-4 h-4" />
                   </Link>
+                )}
+
+                {result.status === 'rejected' && (
+                  <div className="w-full bg-red-50 border border-red-200 rounded-2xl p-4 sm:p-5">
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
+                        <XCircle className="w-5 h-5 text-red-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-bold text-red-800 mb-1">Bukti Pembayaran Ditolak</h4>
+                        <p className="text-xs text-red-700 leading-relaxed">
+                          {result.payment?.rejection_reason && (
+                            <>
+                              <span className="font-semibold">Alasan:</span>{' '}
+                              {result.payment.rejection_reason}.<br />
+                            </>
+                          )}
+                          Silakan unggah ulang bukti transfer yang valid agar reservasi dapat diproses kembali oleh admin.
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      href={`/booking?code=${result.booking_code}`}
+                      className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-md"
+                    >
+                      <UploadCloud className="w-4 h-4" />
+                      <span>Upload Ulang Bukti Pembayaran</span>
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>
