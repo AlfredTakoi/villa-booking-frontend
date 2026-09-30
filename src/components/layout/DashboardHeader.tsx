@@ -381,7 +381,7 @@ export default function DashboardHeader({ onToggleSidebar }: DashboardHeaderProp
   const hasUnread = notificationsList.some(n => !n.read)
   
   const isMasyarakat = user?.level_name?.toLowerCase().includes('masyarakat') || false
-  const isTamu = !isAuthenticated || isGuest
+  const isTamu = !isAuthenticated || isGuest || Boolean(user?.level_name?.toLowerCase().includes('tamu')) || (user?.level_user_id === 9)
   const showAksesSistem = !(isMasyarakat || isTamu)
 
   const handleMarkAllAsRead = () => {

@@ -7,10 +7,18 @@
  * Backend utama: web.php → ApiController
  */
 
-const BACKEND_BASE_URL = (
-  process.env.NEXT_PUBLIC_SIPKK_BACKEND_BASE_URL ||
-  'https://alfredtakoi.net/villa-admin'
-).replace(/\/+$/, '');
+export function getBackendBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_SIPKK_BACKEND_BASE_URL) {
+    return process.env.NEXT_PUBLIC_SIPKK_BACKEND_BASE_URL.replace(/\/+$/, '');
+  }
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://localhost/booking-app';
+    }
+  }
+  return 'https://alfredtakoi.net/villa-admin';
+}
 
 const FRONTEND_BASE_PATH = (
   process.env.NODE_ENV === 'production'
@@ -22,7 +30,7 @@ const FRONTEND_BASE_PATH = (
  * Base URL API backend (Yii2 ApiController).
  */
 export function getApiBaseUrl(): string {
-  return `${BACKEND_BASE_URL}/api`;
+  return `${getBackendBaseUrl()}/api`;
 }
 
 /**
@@ -30,13 +38,14 @@ export function getApiBaseUrl(): string {
  */
 export function buildApiUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const base = getBackendBaseUrl();
 
   if (normalizedPath === '/api' || normalizedPath === '/api/') {
     return getApiBaseUrl();
   }
 
   if (normalizedPath.startsWith('/api/')) {
-    return `${BACKEND_BASE_URL}${normalizedPath}`;
+    return `${base}${normalizedPath}`;
   }
 
   return `${getApiBaseUrl()}${normalizedPath}`;
@@ -70,25 +79,27 @@ export function resolveMediaUrl(url?: string | null, fallback = '/villa-logo.png
     return `https:${target}`;
   }
 
+  const base = getBackendBaseUrl();
+
   // Backend uploads: matches /villa-admin/uploads/..., /booking-app/uploads/..., /uploads/..., uploads/...
   const uploadsMatch = target.match(/(?:^|\/)(uploads\/[^\s]+)/);
   if (uploadsMatch) {
     const uploadPath = uploadsMatch[1];
-    return `${BACKEND_BASE_URL}/${uploadPath}`;
+    return `${base}/${uploadPath}`;
   }
 
   // Backend app assets: matches /villa-admin/app_asset/..., /booking-app/app_asset/..., app_asset/...
   const appAssetMatch = target.match(/(?:^|\/)(app_asset\/[^\s]+)/);
   if (appAssetMatch) {
     const assetPath = appAssetMatch[1];
-    return `${BACKEND_BASE_URL}/${assetPath}`;
+    return `${base}/${assetPath}`;
   }
 
   // Backend file-upload render: matches /villa-admin/file-upload/..., file-upload/...
   const fileUploadMatch = target.match(/(?:^|\/)(file-upload\/[^\s]+)/);
   if (fileUploadMatch) {
     const fileUploadPath = fileUploadMatch[1];
-    return `${BACKEND_BASE_URL}/${fileUploadPath}`;
+    return `${base}/${fileUploadPath}`;
   }
 
   // Static assets located in Next.js public/ directory: prefix with FRONTEND_BASE_PATH

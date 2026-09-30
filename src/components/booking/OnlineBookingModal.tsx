@@ -15,10 +15,14 @@ import {
   Copy,
   Calendar as CalendarIcon,
   Clock,
+  User as UserIcon,
+  LogIn,
+  ShieldCheck,
 } from 'lucide-react';
 import { useVilla } from '@/context/VillaContext';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { buildApiUrl } from '@/lib/utils/api';
+import { useAuthStore } from '@/lib/authStore';
 import { z } from 'zod';
 
 // Zod Schema untuk validasi form reservasi
@@ -118,8 +122,13 @@ export default function OnlineBookingModal({
 }: OnlineBookingModalProps) {
   const router = useRouter();
   const { villa } = useVilla();
+  const { user, token, isAuthenticated, initialize } = useAuthStore();
   const maxGuests = villa.max_guests || 6;
   const allowGuestSelection = Boolean(villa.allow_guest_selection);
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
 
   // Animation States for Smooth Fade In & Fade Out
   const [shouldRender, setShouldRender] = useState(false);
@@ -148,6 +157,15 @@ export default function OnlineBookingModal({
   const [agreedTerms, setAgreedTerms] = useState<boolean>(true);
   const [paymentType, setPaymentType] = useState<'dp' | 'full'>('dp');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Autofill data tamu dari user yang sedang login
+  useEffect(() => {
+    if (user) {
+      if (user.nama_lengkap) setGuestName(user.nama_lengkap);
+      if (user.email) setGuestEmail(user.email);
+      if (user.no_telpon) setGuestPhone(user.no_telpon);
+    }
+  }, [user]);
 
   // API data
   const [dailyRates, setDailyRates] = useState<Record<string, DailyRate>>({});
@@ -210,7 +228,7 @@ export default function OnlineBookingModal({
       onClose();
     }, 300);
   }, [onClose]);
- 
+
   // Auto redirect countdown when booking is successful
   useEffect(() => {
     if (!bookingSuccessCode) return;
@@ -525,6 +543,11 @@ export default function OnlineBookingModal({
       return;
     }
 
+    if (!isAuthenticated) {
+      setAlertMessage('Anda harus masuk (login) ke akun Anda terlebih dahulu untuk membuat reservasi.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -532,6 +555,7 @@ export default function OnlineBookingModal({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           check_in: checkIn,
@@ -569,16 +593,14 @@ export default function OnlineBookingModal({
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/80 backdrop-blur-md overflow-y-auto lg:overflow-hidden transition-opacity duration-300 ease-out ${
-        isAnimating ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}
+      className={`fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/80 backdrop-blur-md overflow-y-auto lg:overflow-hidden transition-opacity duration-300 ease-out ${isAnimating ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
       onClick={triggerClose}
     >
       {/* Outer Modal Box with Scale & Fade Animation */}
       <div
-        className={`relative w-full max-w-7xl 2xl:max-w-[1420px] h-[92vh] max-h-[94vh] lg:h-[90vh] lg:max-h-[850px] bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-white/20 flex flex-col lg:flex-row my-auto transition-all duration-300 ease-out transform ${
-          isAnimating ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
-        }`}
+        className={`relative w-full max-w-7xl 2xl:max-w-[1420px] h-[92vh] max-h-[94vh] lg:h-[90vh] lg:max-h-[850px] bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-white/20 flex flex-col lg:flex-row my-auto transition-all duration-300 ease-out transform ${isAnimating ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
+          }`}
         onClick={(e) => e.stopPropagation()}
       >
         {bookingSuccessCode ? (
@@ -649,769 +671,807 @@ export default function OnlineBookingModal({
         ) : (
           <>
             {/* ================= MOBILE NAVIGATION TABS (Visible only on < lg) ================= */}
-        <div className="lg:hidden flex items-center justify-between px-3 sm:px-4 py-2.5 bg-charcoal-950 border-b border-white/10 z-30 flex-shrink-0">
-          <div className="flex items-center gap-1.5 bg-white/10 p-1 rounded-xl">
-            <button
-              type="button"
-              onClick={() => setMobileTab('calendar')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                mobileTab === 'calendar'
-                  ? 'bg-gold-500 text-charcoal-950 font-bold shadow-sm'
-                  : 'text-white/70 hover:text-white'
-              }`}
-            >
-              <CalendarIcon className="w-3.5 h-3.5" />
-              <span>1. Kalender</span>
-              {checkIn && checkOut && (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileTab('form')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                mobileTab === 'form'
-                  ? 'bg-gold-500 text-charcoal-950 font-bold shadow-sm'
-                  : 'text-white/70 hover:text-white'
-              }`}
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>2. Kontak &amp; Rincian</span>
-              {calculationSummary && (
-                <span className="text-[10px] font-mono font-bold bg-white/20 text-white px-1.5 py-0.5 rounded-full">
-                  {calculationSummary.nights}M
-                </span>
-              )}
-            </button>
-          </div>
-          <button
-            type="button"
-            onClick={triggerClose}
-            className="text-white/60 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
-            aria-label="Tutup popup"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* ================= LEFT SECTION: DUA BULAN KALENDER ================= */}
-        <div
-          className={`flex-1 bg-white text-charcoal-900 flex-col justify-between h-full relative overflow-hidden ${
-            mobileTab === 'calendar' ? 'flex' : 'hidden lg:flex'
-          }`}
-        >
-          {/* Scrollable calendar content */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-3.5 sm:p-6 lg:p-6 xl:p-8 flex flex-col justify-between">
-            <div>
-              {/* Header Title (Bahasa Indonesia) */}
-              <div className="text-center mb-3 sm:mb-4">
-                <span className="text-[10px] sm:text-[11px] tracking-[0.25em] text-gold-600 uppercase font-sans font-bold block mb-0.5">
-                  Villa Casa Anandefa &bull; Puncak Bogor
-                </span>
-                <h2 className="font-serif text-xl sm:text-2xl lg:text-3xl tracking-[0.18em] font-semibold text-charcoal-900 uppercase">
-                  RESERVASI ONLINE
-                </h2>
-                <div className="w-14 sm:w-16 h-0.5 bg-gold-400 mx-auto mt-1.5"></div>
-              </div>
-
-              {/* Alert banner if error or validation */}
-              {alertMessage && (
-                <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs flex items-center gap-2 animate-fade-in">
-                  <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                  <span className="font-medium">{alertMessage}</span>
-                </div>
-              )}
-
-              {/* Month Navigation Controls & Months Display */}
-              <div className="relative">
-                {/* Previous Month Button */}
+            <div className="lg:hidden flex items-center justify-between px-3 sm:px-4 py-2.5 bg-charcoal-950 border-b border-white/10 z-30 flex-shrink-0">
+              <div className="flex items-center gap-1.5 bg-white/10 p-1 rounded-xl">
                 <button
                   type="button"
-                  onClick={() => setMonthOffset((prev) => Math.max(0, prev - 1))}
-                  disabled={monthOffset === 0}
-                  className={`absolute -top-1 left-0 p-2 rounded-full border transition-all z-10 ${
-                    monthOffset === 0
-                      ? 'text-gray-300 border-gray-200 cursor-not-allowed'
-                      : 'text-charcoal-800 border-gray-300 hover:bg-gold-50 hover:border-gold-500'
-                  }`}
-                  aria-label="Bulan Sebelumnya"
+                  onClick={() => setMobileTab('calendar')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${mobileTab === 'calendar'
+                      ? 'bg-gold-500 text-charcoal-950 font-bold shadow-sm'
+                      : 'text-white/70 hover:text-white'
+                    }`}
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <CalendarIcon className="w-3.5 h-3.5" />
+                  <span>1. Kalender</span>
+                  {checkIn && checkOut && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  )}
                 </button>
-
-                {/* Next Month Button */}
-                <button
-                  type="button"
-                  onClick={() => setMonthOffset((prev) => Math.min(11, prev + 1))}
-                  disabled={monthOffset >= 11}
-                  className="absolute -top-1 right-0 p-2 rounded-full border border-gray-300 text-charcoal-800 hover:bg-gold-50 hover:border-gold-500 transition-all z-10"
-                  aria-label="Bulan Berikutnya"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-
-                {/* Calendars Grid with Loading State */}
-                {isLoadingRates ? (
-                  <div className="py-20 text-center flex flex-col items-center justify-center space-y-3 bg-gray-50/50 rounded-2xl border border-gray-100 my-2">
-                    <div className="w-10 h-10 border-3 border-gold-500 border-t-transparent rounded-full animate-spin" />
-                    <div>
-                      <span className="text-xs font-bold text-charcoal-900 tracking-wider uppercase block">
-                        Memuat Ketersediaan &amp; Tarif Kalender...
-                      </span>
-                      <span className="text-[11px] text-gray-500 font-light mt-0.5 block">
-                        Mohon tunggu sebentar, sistem sedang sinkronisasi tanggal
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 pt-1">
-                    {/* Bulan 1 */}
-                    <MonthBlock
-                      grid={gridMonth1}
-                      todayStr={todayStr}
-                      checkIn={checkIn}
-                      checkOut={checkOut}
-                      hoverDate={hoverDate}
-                      dailyRates={dailyRates}
-                      basePrice={basePrice}
-                      onDateClick={handleDateClick}
-                      onDateHover={setHoverDate}
-                    />
-
-                    {/* Bulan 2 */}
-                    <div className="hidden md:block">
-                      <MonthBlock
-                        grid={gridMonth2}
-                        todayStr={todayStr}
-                        checkIn={checkIn}
-                        checkOut={checkOut}
-                        hoverDate={hoverDate}
-                        dailyRates={dailyRates}
-                        basePrice={basePrice}
-                        onDateClick={handleDateClick}
-                        onDateHover={setHoverDate}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Bottom Legend (Bahasa Indonesia) */}
-            <div className="mt-3 sm:mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-gray-600 flex-shrink-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-emerald-600 font-bold text-sm">▼</span>
-                <span className="font-medium">Tarif Terbaik</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>
-                <span className="font-medium">Kamar Terisi / Diblokir</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-gray-500">
-                <span className="font-mono font-bold text-gray-400">///</span>
-                <span>Minimal Menginap: 1 Malam</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Sticky Mobile Prompt / Action Bar when on Calendar Tab */}
-          <div className="lg:hidden p-3 bg-white border-t border-gray-200 flex-shrink-0 z-20 shadow-lg">
-            {checkIn && checkOut ? (
-              <div className="p-3 bg-charcoal-950 text-white rounded-xl flex items-center justify-between gap-3 shadow-lg border border-gold-500/40">
-                <div className="min-w-0">
-                  <div className="text-[10px] text-gold-400 font-bold uppercase tracking-wider">
-                    {formatDisplayDate(checkIn)} &ndash; {formatDisplayDate(checkOut)}
-                  </div>
-                  <div className="text-xs font-semibold text-white truncate">
-                    {calculationSummary ? `${calculationSummary.nights} Malam • Rp ${calculationSummary.formattedTotal}` : ''}
-                  </div>
-                </div>
                 <button
                   type="button"
                   onClick={() => setMobileTab('form')}
-                  className="px-3.5 py-2 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-charcoal-950 font-bold rounded-lg text-xs whitespace-nowrap flex items-center gap-1.5 shadow active:scale-95 transition-transform"
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${mobileTab === 'form'
+                      ? 'bg-gold-500 text-charcoal-950 font-bold shadow-sm'
+                      : 'text-white/70 hover:text-white'
+                    }`}
                 >
-                  <span>Lanjut Isi Data</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <Users className="w-3.5 h-3.5" />
+                  <span>2. Kontak &amp; Rincian</span>
+                  {calculationSummary && (
+                    <span className="text-[10px] font-mono font-bold bg-white/20 text-white px-1.5 py-0.5 rounded-full">
+                      {calculationSummary.nights}M
+                    </span>
+                  )}
                 </button>
               </div>
-            ) : checkIn ? (
-              <div className="p-2.5 bg-gold-50 border border-gold-200 text-charcoal-900 rounded-xl text-xs text-center font-medium">
-                Check-in: <strong className="text-gold-800">{formatDisplayDate(checkIn)}</strong>. Silakan pilih tanggal check-out di kalender.
-              </div>
-            ) : (
-              <div className="p-2.5 bg-gray-50 border border-gray-200 text-gray-600 rounded-xl text-xs text-center font-medium">
-                Ketuk tanggal di kalender untuk menentukan check-in &amp; check-out.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ================= RIGHT SECTION: DARK BOOKING SIDEBAR ================= */}
-        <div
-          className={`w-full lg:w-[440px] xl:w-[480px] 2xl:w-[500px] bg-charcoal-950 text-white flex-col h-full max-h-full border-t lg:border-t-0 lg:border-l border-white/10 relative overflow-hidden flex-shrink-0 ${
-            mobileTab === 'form' ? 'flex' : 'hidden lg:flex'
-          }`}
-        >
-          {/* Pinned Top Bar with Title & Close Button */}
-          <div className="p-4 sm:p-5 pb-3 sm:pb-3.5 border-b border-white/10 flex items-start justify-between gap-3 bg-charcoal-950 flex-shrink-0 z-20">
-            <div>
-              <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-gold-400 block mb-0.5">
-                {villa.name || 'Villa Casa Anandefa'} {villa.city ? `• ${villa.city}` : ''}
-              </span>
-              <h3 className="font-serif text-lg sm:text-xl font-bold text-white">
-                Rincian &amp; Kontak Reservasi
-              </h3>
-              <p className="text-[11px] text-white/60 font-light mt-0.5">
-                Tentukan tanggal dan lengkapi data kontak pemesan untuk konfirmasi instan.
-              </p>
+              <button
+                type="button"
+                onClick={triggerClose}
+                className="text-white/60 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
+                aria-label="Tutup popup"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={triggerClose}
-              className="hidden lg:flex text-white/60 hover:text-white p-1.5 -mr-1 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
-              aria-label="Tutup popup"
+
+            {/* ================= LEFT SECTION: DUA BULAN KALENDER ================= */}
+            <div
+              className={`flex-1 bg-white text-charcoal-900 flex-col justify-between h-full relative overflow-hidden ${mobileTab === 'calendar' ? 'flex' : 'hidden lg:flex'
+                }`}
             >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Dedicated Form Container with Scrollable Body and Fixed Bottom Bar */}
-          <form
-            onSubmit={handleProceedBooking}
-            noValidate
-            className="flex-1 flex flex-col min-h-0 overflow-hidden"
-          >
-            {/* Scrollable Form Body */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5 lg:p-6 space-y-4 pb-6">
-              {/* Alert banner jika ada validasi / error */}
-              {alertMessage && (
-                <div className="p-3 bg-red-500/15 border border-red-500/30 text-red-300 rounded-xl text-xs flex items-start gap-2 animate-fade-in">
-                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                  <span className="font-medium leading-relaxed">{alertMessage}</span>
-                </div>
-              )}
-
-              {/* Tanggal Kedatangan & Keberangkatan (Grid 2 Kolom) */}
-              <div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div
-                    onClick={() => {
-                      clearFieldError('checkIn');
-                      setMobileTab('calendar');
-                    }}
-                    className={`border p-3 rounded-xl cursor-pointer transition-colors group ${
-                      formErrors.checkIn
-                        ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
-                        : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-gold-400/40'
-                    }`}
-                    title="Ketuk untuk ubah tanggal di kalender"
-                  >
-                    <div className="text-[10px] font-bold text-gold-400 uppercase tracking-wider mb-1 flex items-center justify-between">
-                      <span className="flex items-center gap-1">
-                        <span>Check-in</span>
-                        <span className="text-[9px] text-white/40 font-normal lg:hidden">(ubah)</span>
-                      </span>
-                      {checkIn && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCheckIn(null);
-                            setCheckOut(null);
-                          }}
-                          className="text-[9px] text-white/40 hover:text-gold-300 underline lowercase"
-                        >
-                          reset
-                        </button>
-                      )}
-                    </div>
-                    <div className="font-medium text-xs sm:text-sm text-white truncate group-hover:text-gold-300 transition-colors">
-                      {formatDisplayDate(checkIn) || (
-                        <span className="text-white/40 italic text-xs">Pilih di kalender</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div
-                    onClick={() => {
-                      clearFieldError('checkOut');
-                      setMobileTab('calendar');
-                    }}
-                    className={`border p-3 rounded-xl cursor-pointer transition-colors group ${
-                      formErrors.checkOut
-                        ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
-                        : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-gold-400/40'
-                    }`}
-                    title="Ketuk untuk ubah tanggal di kalender"
-                  >
-                    <div className="text-[10px] font-bold text-gold-400 uppercase tracking-wider mb-1 flex items-center justify-between">
-                      <span className="flex items-center gap-1">
-                        <span>Check-out</span>
-                        <span className="text-[9px] text-white/40 font-normal lg:hidden">(ubah)</span>
-                      </span>
-                      {checkOut && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCheckOut(null);
-                          }}
-                          className="text-[9px] text-white/40 hover:text-gold-300 underline lowercase"
-                        >
-                          ubah
-                        </button>
-                      )}
-                    </div>
-                    <div className="font-medium text-xs sm:text-sm text-white truncate group-hover:text-gold-300 transition-colors">
-                      {formatDisplayDate(checkOut) || (
-                        <span className="text-white/40 italic text-xs">Pilih di kalender</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Pesan error tanggal jika ada */}
-                {(formErrors.checkIn || formErrors.checkOut) && (
-                  <p className="text-[11px] text-red-400 mt-1.5 flex items-center gap-1 font-medium animate-fade-in">
-                    <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-                    <span>{formErrors.checkIn || formErrors.checkOut}</span>
-                  </p>
-                )}
-              </div>
-
-            {/* Jumlah Tamu (Dewasa & Anak Side by Side) - Hanya tampil jika diizinkan di admin panel */}
-            {allowGuestSelection && (
-              <div className="grid grid-cols-2 gap-3">
+              {/* Scrollable calendar content */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-3.5 sm:p-6 lg:p-6 xl:p-8 flex flex-col justify-between">
                 <div>
-                  <label className="block text-[11px] font-semibold text-white/80 uppercase tracking-wider mb-1">
-                    Dewasa
-                  </label>
-                  <CustomSelect
-                    value={String(adults)}
-                    onChange={(val) => setAdults(Number(val))}
-                    size="sm"
-                    options={Array.from({ length: maxGuests }, (_, i) => i + 1).map((n) => ({
-                      value: String(n),
-                      label: `${n} Dewasa ${n === maxGuests ? '(Maks)' : ''}`,
-                    }))}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-white/80 uppercase tracking-wider mb-1">
-                    Anak-anak
-                  </label>
-                  <CustomSelect
-                    value={String(children)}
-                    onChange={(val) => setChildren(Number(val))}
-                    size="sm"
-                    options={Array.from({ length: Math.max(1, maxGuests - 1) + 1 }, (_, i) => i).map((n) => ({
-                      value: String(n),
-                      label: `${n} Anak`,
-                    }))}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Ringkasan Estimasi Biaya & Opsi DP */}
-            {calculationSummary ? (
-              <div className="space-y-2.5">
-                {/* Opsi Tipe Pembayaran */}
-                <div>
-                  <label className="block text-[11px] font-semibold text-white/80 uppercase tracking-wider mb-1.5">
-                    Skema Pembayaran Reservasi
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentType('dp')}
-                      className={`p-2.5 rounded-xl text-left border transition-all relative ${
-                        paymentType === 'dp'
-                          ? 'bg-gold-500/20 border-gold-400 text-white shadow-sm ring-1 ring-gold-400/50'
-                          : 'bg-charcoal-900 border-white/10 text-white/70 hover:border-white/30'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] font-bold text-gold-300">Bayar DP</span>
-                        <span className="text-[9px] bg-gold-400 text-charcoal-950 font-bold px-1.5 py-0.5 rounded-full">
-                          Standar
-                        </span>
-                      </div>
-                      <div className="text-xs font-serif font-bold text-white">
-                        Rp {calculationSummary.formattedDpAmount}
-                      </div>
-                      <div className="text-[10px] text-white/60 mt-0.5 leading-tight">
-                        Rp 1.000.000 / malam
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setPaymentType('full')}
-                      className={`p-2.5 rounded-xl text-left border transition-all relative ${
-                        paymentType === 'full'
-                          ? 'bg-gold-500/20 border-gold-400 text-white shadow-sm ring-1 ring-gold-400/50'
-                          : 'bg-charcoal-900 border-white/10 text-white/70 hover:border-white/30'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[11px] font-bold text-gold-300">Bayar Penuh</span>
-                        <span className="text-[9px] bg-white/15 text-white/80 font-medium px-1.5 py-0.5 rounded-full">
-                          Lunas
-                        </span>
-                      </div>
-                      <div className="text-xs font-serif font-bold text-white">
-                        Rp {calculationSummary.formattedTotal}
-                      </div>
-                      <div className="text-[10px] text-white/60 mt-0.5 leading-tight">
-                        Tanpa sisa saat check-in
-                      </div>
-                    </button>
+                  {/* Header Title (Bahasa Indonesia) */}
+                  <div className="text-center mb-3 sm:mb-4">
+                    <span className="text-[10px] sm:text-[11px] tracking-[0.25em] text-gold-600 uppercase font-sans font-bold block mb-0.5">
+                      Villa Casa Anandefa &bull; Puncak Bogor
+                    </span>
+                    <h2 className="font-serif text-xl sm:text-2xl lg:text-3xl tracking-[0.18em] font-semibold text-charcoal-900 uppercase">
+                      RESERVASI ONLINE
+                    </h2>
+                    <div className="w-14 sm:w-16 h-0.5 bg-gold-400 mx-auto mt-1.5"></div>
                   </div>
-                </div>
 
-                {/* Ringkasan Rincian Biaya */}
-                <div className="p-3 rounded-xl bg-gold-500/10 border border-gold-500/25 text-xs space-y-1.5">
-                  <div className="flex justify-between text-white/80">
-                    <span>Durasi Menginap:</span>
-                    <span className="font-semibold text-white">{calculationSummary.nights} Malam</span>
-                  </div>
-                  <div className="flex justify-between text-white/80">
-                    <span>Total Biaya Sewa Villa:</span>
-                    <span className="font-medium text-white">Rp {calculationSummary.formattedTotal}</span>
-                  </div>
-                  {paymentType === 'dp' && (
-                    <div className="flex justify-between text-gold-300/90 text-[11px]">
-                      <span>Sisa Pelunasan Saat Check-in:</span>
-                      <span className="font-medium text-white">Rp {calculationSummary.formattedRemainingAmount}</span>
+                  {/* Alert banner if error or validation */}
+                  {alertMessage && (
+                    <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs flex items-center gap-2 animate-fade-in">
+                      <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <span className="font-medium">{alertMessage}</span>
                     </div>
                   )}
-                  <div className="border-t border-white/10 pt-1.5 flex justify-between items-baseline">
-                    <span className="text-white font-semibold">
-                      {paymentType === 'dp' ? 'Tagihan Transfer DP Sekarang:' : 'Total Tagihan Transfer:'}
-                    </span>
-                    <span className="font-serif font-bold text-gold-400 text-sm sm:text-base">
-                      Rp {calculationSummary.formattedPayableAmount}
-                    </span>
+
+                  {/* Month Navigation Controls & Months Display */}
+                  <div className="relative">
+                    {/* Previous Month Button */}
+                    <button
+                      type="button"
+                      onClick={() => setMonthOffset((prev) => Math.max(0, prev - 1))}
+                      disabled={monthOffset === 0}
+                      className={`absolute -top-1 left-0 p-2 rounded-full border transition-all z-10 ${monthOffset === 0
+                          ? 'text-gray-300 border-gray-200 cursor-not-allowed'
+                          : 'text-charcoal-800 border-gray-300 hover:bg-gold-50 hover:border-gold-500'
+                        }`}
+                      aria-label="Bulan Sebelumnya"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+
+                    {/* Next Month Button */}
+                    <button
+                      type="button"
+                      onClick={() => setMonthOffset((prev) => Math.min(11, prev + 1))}
+                      disabled={monthOffset >= 11}
+                      className="absolute -top-1 right-0 p-2 rounded-full border border-gray-300 text-charcoal-800 hover:bg-gold-50 hover:border-gold-500 transition-all z-10"
+                      aria-label="Bulan Berikutnya"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+
+                    {/* Calendars Grid with Loading State */}
+                    {isLoadingRates ? (
+                      <div className="py-20 text-center flex flex-col items-center justify-center space-y-3 bg-gray-50/50 rounded-2xl border border-gray-100 my-2">
+                        <div className="w-10 h-10 border-3 border-gold-500 border-t-transparent rounded-full animate-spin" />
+                        <div>
+                          <span className="text-xs font-bold text-charcoal-900 tracking-wider uppercase block">
+                            Memuat Ketersediaan &amp; Tarif Kalender...
+                          </span>
+                          <span className="text-[11px] text-gray-500 font-light mt-0.5 block">
+                            Mohon tunggu sebentar, sistem sedang sinkronisasi tanggal
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 pt-1">
+                        {/* Bulan 1 */}
+                        <MonthBlock
+                          grid={gridMonth1}
+                          todayStr={todayStr}
+                          checkIn={checkIn}
+                          checkOut={checkOut}
+                          hoverDate={hoverDate}
+                          dailyRates={dailyRates}
+                          basePrice={basePrice}
+                          onDateClick={handleDateClick}
+                          onDateHover={setHoverDate}
+                        />
+
+                        {/* Bulan 2 */}
+                        <div className="hidden md:block">
+                          <MonthBlock
+                            grid={gridMonth2}
+                            todayStr={todayStr}
+                            checkIn={checkIn}
+                            checkOut={checkOut}
+                            hoverDate={hoverDate}
+                            dailyRates={dailyRates}
+                            basePrice={basePrice}
+                            onDateClick={handleDateClick}
+                            onDateHover={setHoverDate}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-charcoal-900 border border-white/15 text-[11px] space-y-2 text-white/80">
-                  <div className="flex items-center gap-1.5 text-gold-400 font-bold uppercase tracking-wider text-[10px]">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Ketentuan &amp; Cara Booking</span>
+                {/* Bottom Legend (Bahasa Indonesia) */}
+                <div className="mt-3 sm:mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-gray-600 flex-shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-emerald-600 font-bold text-sm">▼</span>
+                    <span className="font-medium">Tarif Terbaik</span>
                   </div>
-                  <ul className="space-y-1.5 pl-3 list-disc text-white/70 text-[10.5px] leading-relaxed">
-                    {(villa.booking_instructions ||
-                      'Pembayaran DP sebesar Rp 1.000.000 / malam untuk mengunci tanggal menginap.\nSetelah DP diterima, tanggal langsung kami booked dan invoice resmi dikirimkan paling lambat 1 x 24 jam.\nPembatalan tidak dapat dilakukan (non-refundable), namun boleh reschedule maksimal 1x (diinformasikan maksimal 10 hari sebelumnya / H-10).\nBantuan & info ketersediaan: 0813-8266-7801 / 0816-4819-298.'
-                    )
-                      .split('\n')
-                      .map((p) => p.trim().replace(/^[-•*]\s*/, ''))
-                      .filter(Boolean)
-                      .map((point, idx) => {
-                        const colonIndex = point.indexOf(':');
-                        if (colonIndex > 0 && colonIndex <= 35 && !point.slice(0, colonIndex).includes('http')) {
-                          return (
-                            <li key={idx}>
-                              <strong className="text-white">{point.slice(0, colonIndex)}:</strong>
-                              {point.slice(colonIndex + 1)}
-                            </li>
-                          );
-                        }
-                        return <li key={idx}>{point}</li>;
-                      })}
-                  </ul>
-                  <div className="pt-1.5 border-t border-white/10 text-right">
-                    <Link
-                      href="/tata-tertib"
-                      target="_blank"
-                      className="inline-flex items-center gap-1 text-[10.5px] text-gold-400 hover:text-gold-300 transition-colors font-medium group"
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>
+                    <span className="font-medium">Kamar Terisi / Diblokir</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-gray-500">
+                    <span className="font-mono font-bold text-gray-400">///</span>
+                    <span>Minimal Menginap: 1 Malam</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sticky Mobile Prompt / Action Bar when on Calendar Tab */}
+              <div className="lg:hidden p-3 bg-white border-t border-gray-200 flex-shrink-0 z-20 shadow-lg">
+                {checkIn && checkOut ? (
+                  <div className="p-3 bg-charcoal-950 text-white rounded-xl flex items-center justify-between gap-3 shadow-lg border border-gold-500/40">
+                    <div className="min-w-0">
+                      <div className="text-[10px] text-gold-400 font-bold uppercase tracking-wider">
+                        {formatDisplayDate(checkIn)} &ndash; {formatDisplayDate(checkOut)}
+                      </div>
+                      <div className="text-xs font-semibold text-white truncate">
+                        {calculationSummary ? `${calculationSummary.nights} Malam • Rp ${calculationSummary.formattedTotal}` : ''}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setMobileTab('form')}
+                      className="px-3.5 py-2 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-charcoal-950 font-bold rounded-lg text-xs whitespace-nowrap flex items-center gap-1.5 shadow active:scale-95 transition-transform"
                     >
-                      <span>Lihat Tata Tertib &amp; Kebijakan Lengkap</span>
-                      <span className="group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+                      <span>Lanjut Isi Data</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : checkIn ? (
+                  <div className="p-2.5 bg-gold-50 border border-gold-200 text-charcoal-900 rounded-xl text-xs text-center font-medium">
+                    Check-in: <strong className="text-gold-800">{formatDisplayDate(checkIn)}</strong>. Silakan pilih tanggal check-out di kalender.
+                  </div>
+                ) : (
+                  <div className="p-2.5 bg-gray-50 border border-gray-200 text-gray-600 rounded-xl text-xs text-center font-medium">
+                    Ketuk tanggal di kalender untuk menentukan check-in &amp; check-out.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ================= RIGHT SECTION: DARK BOOKING SIDEBAR ================= */}
+            <div
+              className={`w-full lg:w-[440px] xl:w-[480px] 2xl:w-[500px] bg-charcoal-950 text-white flex-col h-full max-h-full border-t lg:border-t-0 lg:border-l border-white/10 relative overflow-hidden flex-shrink-0 ${mobileTab === 'form' ? 'flex' : 'hidden lg:flex'
+                }`}
+            >
+              {/* Pinned Top Bar with Title & Close Button */}
+              <div className="p-4 sm:p-5 pb-3 sm:pb-3.5 border-b border-white/10 flex items-start justify-between gap-3 bg-charcoal-950 flex-shrink-0 z-20">
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-gold-400 block mb-0.5">
+                    {villa.name || 'Villa Casa Anandefa'} {villa.city ? `• ${villa.city}` : ''}
+                  </span>
+                  <h3 className="font-serif text-lg sm:text-xl font-bold text-white">
+                    Rincian &amp; Kontak Reservasi
+                  </h3>
+                  <p className="text-[11px] text-white/60 font-light mt-0.5">
+                    Tentukan tanggal dan lengkapi data kontak pemesan untuk konfirmasi instan.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={triggerClose}
+                  className="hidden lg:flex text-white/60 hover:text-white p-1.5 -mr-1 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
+                  aria-label="Tutup popup"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Dedicated Form Container with Scrollable Body and Fixed Bottom Bar */}
+              <form
+                onSubmit={handleProceedBooking}
+                noValidate
+                className="flex-1 flex flex-col min-h-0 overflow-hidden"
+              >
+                {/* Scrollable Form Body */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-5 lg:p-6 space-y-4 pb-6">
+                  {/* Alert banner jika ada validasi / error */}
+                  {alertMessage && (
+                    <div className="p-3 bg-red-500/15 border border-red-500/30 text-red-300 rounded-xl text-xs flex items-start gap-2 animate-fade-in">
+                      <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                      <span className="font-medium leading-relaxed">{alertMessage}</span>
+                    </div>
+                  )}
+
+                  {/* Tanggal Kedatangan & Keberangkatan (Grid 2 Kolom) */}
+                  <div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div
+                        onClick={() => {
+                          clearFieldError('checkIn');
+                          setMobileTab('calendar');
+                        }}
+                        className={`border p-3 rounded-xl cursor-pointer transition-colors group ${formErrors.checkIn
+                            ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
+                            : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-gold-400/40'
+                          }`}
+                        title="Ketuk untuk ubah tanggal di kalender"
+                      >
+                        <div className="text-[10px] font-bold text-gold-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                          <span className="flex items-center gap-1">
+                            <span>Check-in</span>
+                            <span className="text-[9px] text-white/40 font-normal lg:hidden">(ubah)</span>
+                          </span>
+                          {checkIn && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCheckIn(null);
+                                setCheckOut(null);
+                              }}
+                              className="text-[9px] text-white/40 hover:text-gold-300 underline lowercase"
+                            >
+                              reset
+                            </button>
+                          )}
+                        </div>
+                        <div className="font-medium text-xs sm:text-sm text-white truncate group-hover:text-gold-300 transition-colors">
+                          {formatDisplayDate(checkIn) || (
+                            <span className="text-white/40 italic text-xs">Pilih di kalender</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div
+                        onClick={() => {
+                          clearFieldError('checkOut');
+                          setMobileTab('calendar');
+                        }}
+                        className={`border p-3 rounded-xl cursor-pointer transition-colors group ${formErrors.checkOut
+                            ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
+                            : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-gold-400/40'
+                          }`}
+                        title="Ketuk untuk ubah tanggal di kalender"
+                      >
+                        <div className="text-[10px] font-bold text-gold-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                          <span className="flex items-center gap-1">
+                            <span>Check-out</span>
+                            <span className="text-[9px] text-white/40 font-normal lg:hidden">(ubah)</span>
+                          </span>
+                          {checkOut && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCheckOut(null);
+                              }}
+                              className="text-[9px] text-white/40 hover:text-gold-300 underline lowercase"
+                            >
+                              ubah
+                            </button>
+                          )}
+                        </div>
+                        <div className="font-medium text-xs sm:text-sm text-white truncate group-hover:text-gold-300 transition-colors">
+                          {formatDisplayDate(checkOut) || (
+                            <span className="text-white/40 italic text-xs">Pilih di kalender</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pesan error tanggal jika ada */}
+                    {(formErrors.checkIn || formErrors.checkOut) && (
+                      <p className="text-[11px] text-red-400 mt-1.5 flex items-center gap-1 font-medium animate-fade-in">
+                        <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                        <span>{formErrors.checkIn || formErrors.checkOut}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Jumlah Tamu (Dewasa & Anak Side by Side) - Hanya tampil jika diizinkan di admin panel */}
+                  {allowGuestSelection && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-white/80 uppercase tracking-wider mb-1">
+                          Dewasa
+                        </label>
+                        <CustomSelect
+                          value={String(adults)}
+                          onChange={(val) => setAdults(Number(val))}
+                          size="sm"
+                          options={Array.from({ length: maxGuests }, (_, i) => i + 1).map((n) => ({
+                            value: String(n),
+                            label: `${n} Dewasa ${n === maxGuests ? '(Maks)' : ''}`,
+                          }))}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-white/80 uppercase tracking-wider mb-1">
+                          Anak-anak
+                        </label>
+                        <CustomSelect
+                          value={String(children)}
+                          onChange={(val) => setChildren(Number(val))}
+                          size="sm"
+                          options={Array.from({ length: Math.max(1, maxGuests - 1) + 1 }, (_, i) => i).map((n) => ({
+                            value: String(n),
+                            label: `${n} Anak`,
+                          }))}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ringkasan Estimasi Biaya & Opsi DP */}
+                  {calculationSummary ? (
+                    <div className="space-y-2.5">
+                      {/* Opsi Tipe Pembayaran */}
+                      <div>
+                        <label className="block text-[11px] font-semibold text-white/80 uppercase tracking-wider mb-1.5">
+                          Skema Pembayaran Reservasi
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setPaymentType('dp')}
+                            className={`p-2.5 rounded-xl text-left border transition-all relative ${paymentType === 'dp'
+                                ? 'bg-gold-500/20 border-gold-400 text-white shadow-sm ring-1 ring-gold-400/50'
+                                : 'bg-charcoal-900 border-white/10 text-white/70 hover:border-white/30'
+                              }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[11px] font-bold text-gold-300">Bayar DP</span>
+                              <span className="text-[9px] bg-gold-400 text-charcoal-950 font-bold px-1.5 py-0.5 rounded-full">
+                                Standar
+                              </span>
+                            </div>
+                            <div className="text-xs font-serif font-bold text-white">
+                              Rp {calculationSummary.formattedDpAmount}
+                            </div>
+                            <div className="text-[10px] text-white/60 mt-0.5 leading-tight">
+                              Rp 1.000.000 / malam
+                            </div>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setPaymentType('full')}
+                            className={`p-2.5 rounded-xl text-left border transition-all relative ${paymentType === 'full'
+                                ? 'bg-gold-500/20 border-gold-400 text-white shadow-sm ring-1 ring-gold-400/50'
+                                : 'bg-charcoal-900 border-white/10 text-white/70 hover:border-white/30'
+                              }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[11px] font-bold text-gold-300">Bayar Penuh</span>
+                              <span className="text-[9px] bg-white/15 text-white/80 font-medium px-1.5 py-0.5 rounded-full">
+                                Lunas
+                              </span>
+                            </div>
+                            <div className="text-xs font-serif font-bold text-white">
+                              Rp {calculationSummary.formattedTotal}
+                            </div>
+                            <div className="text-[10px] text-white/60 mt-0.5 leading-tight">
+                              Tanpa sisa saat check-in
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Ringkasan Rincian Biaya */}
+                      <div className="p-3 rounded-xl bg-gold-500/10 border border-gold-500/25 text-xs space-y-1.5">
+                        <div className="flex justify-between text-white/80">
+                          <span>Durasi Menginap:</span>
+                          <span className="font-semibold text-white">{calculationSummary.nights} Malam</span>
+                        </div>
+                        <div className="flex justify-between text-white/80">
+                          <span>Total Biaya Sewa Villa:</span>
+                          <span className="font-medium text-white">Rp {calculationSummary.formattedTotal}</span>
+                        </div>
+                        {paymentType === 'dp' && (
+                          <div className="flex justify-between text-gold-300/90 text-[11px]">
+                            <span>Sisa Pelunasan Saat Check-in:</span>
+                            <span className="font-medium text-white">Rp {calculationSummary.formattedRemainingAmount}</span>
+                          </div>
+                        )}
+                        <div className="border-t border-white/10 pt-1.5 flex justify-between items-baseline">
+                          <span className="text-white font-semibold">
+                            {paymentType === 'dp' ? 'Tagihan Transfer DP Sekarang:' : 'Total Tagihan Transfer:'}
+                          </span>
+                          <span className="font-serif font-bold text-gold-400 text-sm sm:text-base">
+                            Rp {calculationSummary.formattedPayableAmount}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-charcoal-900 border border-white/15 text-[11px] space-y-2 text-white/80">
+                        <div className="flex items-center gap-1.5 text-gold-400 font-bold uppercase tracking-wider text-[10px]">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>Ketentuan &amp; Cara Booking</span>
+                        </div>
+                        <ul className="space-y-1.5 pl-3 list-disc text-white/70 text-[10.5px] leading-relaxed">
+                          {(villa.booking_instructions ||
+                            'Pembayaran DP sebesar Rp 1.000.000 / malam untuk mengunci tanggal menginap.\nSetelah DP diterima, tanggal langsung kami booked dan invoice resmi dikirimkan paling lambat 1 x 24 jam.\nPembatalan tidak dapat dilakukan (non-refundable), namun boleh reschedule maksimal 1x (diinformasikan maksimal 10 hari sebelumnya / H-10).\nBantuan & info ketersediaan: 0813-8266-7801 / 0816-4819-298.'
+                          )
+                            .split('\n')
+                            .map((p) => p.trim().replace(/^[-•*]\s*/, ''))
+                            .filter(Boolean)
+                            .map((point, idx) => {
+                              const colonIndex = point.indexOf(':');
+                              if (colonIndex > 0 && colonIndex <= 35 && !point.slice(0, colonIndex).includes('http')) {
+                                return (
+                                  <li key={idx}>
+                                    <strong className="text-white">{point.slice(0, colonIndex)}:</strong>
+                                    {point.slice(colonIndex + 1)}
+                                  </li>
+                                );
+                              }
+                              return <li key={idx}>{point}</li>;
+                            })}
+                        </ul>
+                        <div className="pt-1.5 border-t border-white/10 text-right">
+                          <Link
+                            href="/tata-tertib"
+                            target="_blank"
+                            className="inline-flex items-center gap-1 text-[10.5px] text-gold-400 hover:text-gold-300 transition-colors font-medium group"
+                          >
+                            <span>Lihat Tata Tertib &amp; Kebijakan Lengkap</span>
+                            <span className="group-hover:translate-x-0.5 transition-transform">&rarr;</span>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setMobileTab('calendar')}
+                      className="w-full p-3 rounded-xl bg-gold-500/10 hover:bg-gold-500/20 border border-gold-400/30 text-xs text-gold-300 text-center font-medium transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                    >
+                      <CalendarIcon className="w-4 h-4 text-gold-400 group-hover:scale-110 transition-transform" />
+                      <span>Pilih tanggal check-in &amp; check-out di kalender &rarr;</span>
+                    </button>
+                  )}
+
+                  {/* Auth Gate Banner & Divider: Data Kontak Pemesan */}
+                  <div className="pt-2 border-t border-white/15">
+                    {!isAuthenticated ? (
+                      <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-400/30 text-amber-200 text-xs mb-3 space-y-2">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                          <div>
+                            <strong className="text-white block">Login Diperlukan untuk Reservasi</strong>
+                            <p className="text-[11px] text-amber-200/80">
+                              Untuk keamanan &amp; kelancaran konfirmasi villa, Anda harus masuk ke akun tamu terlebih dahulu.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          <Link
+                            href="/login"
+                            onClick={triggerClose}
+                            className="px-3 py-1.5 rounded-lg bg-gold-500 hover:bg-gold-400 text-charcoal-950 font-bold text-[11px] transition-colors"
+                          >
+                            Masuk ke Akun
+                          </Link>
+                          <Link
+                            href="/register"
+                            onClick={triggerClose}
+                            className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold text-[11px] transition-colors"
+                          >
+                            Daftar Akun Baru
+                          </Link>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 text-xs mb-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span className="text-[11px]">
+                            Login sebagai: <strong className="text-white">{user?.nama_lengkap || user?.username}</strong>
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-emerald-300 font-mono bg-emerald-500/20 px-2 py-0.5 rounded-full">
+                          Tamu Terverifikasi
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <Users className="w-4 h-4 text-gold-400" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-white">
+                        Data Kontak Pemesan
+                      </span>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      <div>
+                        <label className="block text-[11px] font-medium text-white/70 mb-1">
+                          Nama Lengkap (KTP/Paspor) <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={guestName}
+                          onChange={(e) => {
+                            setGuestName(e.target.value);
+                            clearFieldError('guestName');
+                          }}
+                          placeholder="Contoh: Budi Santoso"
+                          className={`w-full bg-charcoal-900 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors border ${formErrors.guestName
+                              ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
+                              : 'border-white/20 focus:border-gold-400'
+                            }`}
+                        />
+                        {formErrors.guestName && (
+                          <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1 font-medium animate-fade-in">
+                            <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                            <span>{formErrors.guestName}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-medium text-white/70 mb-1">
+                          Nomor WhatsApp / HP Aktif <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="tel"
+                          value={guestPhone}
+                          onChange={(e) => {
+                            setGuestPhone(e.target.value);
+                            clearFieldError('guestPhone');
+                          }}
+                          placeholder="Contoh: 081234567890"
+                          className={`w-full bg-charcoal-900 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors border ${formErrors.guestPhone
+                              ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
+                              : 'border-white/20 focus:border-gold-400'
+                            }`}
+                        />
+                        {formErrors.guestPhone ? (
+                          <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1 font-medium animate-fade-in">
+                            <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                            <span>{formErrors.guestPhone}</span>
+                          </p>
+                        ) : (
+                          <span className="text-[10px] text-white/40 mt-0.5 block">
+                            Konfirmasi booking &amp; invoice dikirim ke WA ini
+                          </span>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-medium text-white/70 mb-1">
+                          Alamat Email <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          value={guestEmail}
+                          onChange={(e) => {
+                            setGuestEmail(e.target.value);
+                            clearFieldError('guestEmail');
+                          }}
+                          placeholder="nama@email.com"
+                          className={`w-full bg-charcoal-900 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors border ${formErrors.guestEmail
+                              ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
+                              : 'border-white/20 focus:border-gold-400'
+                            }`}
+                        />
+                        {formErrors.guestEmail && (
+                          <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1 font-medium animate-fade-in">
+                            <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                            <span>{formErrors.guestEmail}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-medium text-white/70 mb-1">
+                          Catatan Khusus (Opsional)
+                        </label>
+                        <textarea
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          rows={2}
+                          placeholder="Contoh: Jam kedatangan perkiraan pukul 14:00 WIB"
+                          className="w-full bg-charcoal-900 border border-white/20 rounded-xl px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-gold-400 transition-colors resize-none"
+                        />
+                      </div>
+
+                      {/* Keperluan Menginap */}
+                      <div>
+                        <label className="block text-[11px] font-medium text-white/70 mb-1">
+                          Keperluan Menginap <span className="text-red-400">*</span>
+                        </label>
+                        <CustomSelect
+                          value={eventType}
+                          onChange={(val) => {
+                            setEventType(val);
+                            clearFieldError('eventType');
+                          }}
+                          size="sm"
+                          options={[
+                            { value: 'Acara Keluarga', label: 'Acara Keluarga' },
+                            { value: 'Gathering Kantor', label: 'Gathering Kantor' },
+                            { value: 'Arisan', label: 'Arisan' },
+                            { value: 'Reuni', label: 'Reuni' },
+                            { value: 'Lainnya', label: 'Lainnya (Sebutkan)' },
+                          ]}
+                        />
+                        {eventType === 'Lainnya' && (
+                          <div>
+                            <input
+                              type="text"
+                              value={eventTypeOther}
+                              onChange={(e) => {
+                                setEventTypeOther(e.target.value);
+                                clearFieldError('eventTypeOther');
+                              }}
+                              placeholder="Sebutkan keperluan acara / menginap..."
+                              className={`w-full mt-2 bg-charcoal-900 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors border ${formErrors.eventTypeOther
+                                  ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
+                                  : 'border-gold-500/50 focus:border-gold-400'
+                                }`}
+                            />
+                            {formErrors.eventTypeOther && (
+                              <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1 font-medium animate-fade-in">
+                                <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                                <span>{formErrors.eventTypeOther}</span>
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Pertanyaan Pernah Menginap */}
+                      <div>
+                        <label className="block text-[11px] font-medium text-white/70 mb-1">
+                          Apakah Anda pernah menginap sebelumnya?
+                        </label>
+                        <div className="grid grid-cols-2 gap-2 mt-1">
+                          <button
+                            type="button"
+                            onClick={() => setHasStayedBefore(true)}
+                            className={`py-1.5 px-3 rounded-xl text-xs font-semibold border transition-all ${hasStayedBefore
+                                ? 'bg-gold-500/20 border-gold-400 text-gold-300'
+                                : 'bg-charcoal-900 border-white/10 text-white/60 hover:text-white'
+                              }`}
+                          >
+                            Ya, Pernah
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setHasStayedBefore(false)}
+                            className={`py-1.5 px-3 rounded-xl text-xs font-semibold border transition-all ${!hasStayedBefore
+                                ? 'bg-gold-500/20 border-gold-400 text-gold-300'
+                                : 'bg-charcoal-900 border-white/10 text-white/60 hover:text-white'
+                              }`}
+                          >
+                            Belum Pernah
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Checkbox Persetujuan Tata Tertib */}
+                      <div className="pt-2 border-t border-white/10">
+                        <label className="flex items-start gap-2.5 cursor-pointer group">
+                          <input
+                            type="checkbox"
+                            checked={agreedTerms}
+                            onChange={(e) => {
+                              setAgreedTerms(e.target.checked);
+                              clearFieldError('agreedTerms');
+                            }}
+                            className="mt-0.5 rounded border-white/30 bg-charcoal-900 text-gold-500 focus:ring-gold-400 w-4 h-4 cursor-pointer"
+                          />
+                          <span className="text-[11px] text-white/80 group-hover:text-white transition-colors leading-relaxed">
+                            Saya menyetujui{' '}
+                            <Link
+                              href="/tata-tertib"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-gold-400 font-semibold underline hover:text-gold-300 transition-colors"
+                            >
+                              tata tertib dan ketentuan
+                            </Link>{' '}
+                            menginap di {villa.name || 'villa'}.
+                          </span>
+                        </label>
+                        {formErrors.agreedTerms && (
+                          <p className="text-[11px] text-red-400 mt-1.5 flex items-center gap-1 font-medium animate-fade-in">
+                            <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                            <span>{formErrors.agreedTerms}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ================= FIXED / FLOATING STICKY BOTTOM ACTION BAR ================= */}
+                <div className="p-3.5 sm:p-4 bg-charcoal-950/95 backdrop-blur-xl border-t border-white/15 flex-shrink-0 z-30 shadow-[0_-8px_25px_rgba(0,0,0,0.5)]">
+                  {/* Tombol kembali ke kalender di versi mobile */}
+                  <button
+                    type="button"
+                    onClick={() => setMobileTab('calendar')}
+                    className="lg:hidden w-full mb-2.5 py-1.5 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[11px] text-gold-300 font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <CalendarIcon className="w-3.5 h-3.5 text-gold-400" />
+                    <span>&larr; Lihat / Ubah Tanggal di Kalender</span>
+                  </button>
+
+                  {!isAuthenticated ? (
+                    <Link
+                      href="/login"
+                      onClick={triggerClose}
+                      className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-charcoal-950 font-bold py-3.5 px-4 rounded-xl tracking-wider text-xs uppercase transition-all duration-300 transform active:scale-[0.98] shadow-lg shadow-gold-500/25 flex items-center justify-center gap-2 cursor-pointer text-decoration-none"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      <span>MASUK KE AKUN UNTUK MELANJUTKAN RESERVASI</span>
+                    </Link>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 disabled:opacity-50 disabled:cursor-not-allowed text-charcoal-950 font-bold py-3.5 px-4 rounded-xl tracking-wider text-xs uppercase transition-all duration-300 transform active:scale-[0.98] shadow-lg shadow-gold-500/25 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-charcoal-950 border-t-transparent rounded-full animate-spin" />
+                          <span>Memproses Reservasi...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>BUAT RESERVASI &amp; LANJUT KE PEMBAYARAN</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  <div className="flex items-center justify-between mt-2 px-1 text-[11px] text-white/50">
+                    <span className="truncate flex items-center gap-1 text-[10.5px]">
+                      <CheckCircle2 className="w-3 h-3 text-gold-400 flex-shrink-0" />
+                      Konfirmasi Instan via WhatsApp
+                    </span>
+                    <Link
+                      href="/cek-booking"
+                      onClick={triggerClose}
+                      className="text-[10.5px] text-white/50 hover:text-gold-400 transition-colors underline whitespace-nowrap"
+                    >
+                      Cek Reservasi
                     </Link>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setMobileTab('calendar')}
-                className="w-full p-3 rounded-xl bg-gold-500/10 hover:bg-gold-500/20 border border-gold-400/30 text-xs text-gold-300 text-center font-medium transition-all flex items-center justify-center gap-2 group cursor-pointer"
-              >
-                <CalendarIcon className="w-4 h-4 text-gold-400 group-hover:scale-110 transition-transform" />
-                <span>Pilih tanggal check-in &amp; check-out di kalender &rarr;</span>
-              </button>
-            )}
-
-            {/* Divider: Data Kontak Pemesan */}
-            <div className="pt-2 border-t border-white/15">
-              <div className="flex items-center gap-2 mb-2.5">
-                <Users className="w-4 h-4 text-gold-400" />
-                <span className="text-xs font-bold uppercase tracking-wider text-white">
-                  Data Kontak Pemesan
-                </span>
-              </div>
-
-              <div className="space-y-2.5">
-                <div>
-                  <label className="block text-[11px] font-medium text-white/70 mb-1">
-                    Nama Lengkap (KTP/Paspor) <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={guestName}
-                    onChange={(e) => {
-                      setGuestName(e.target.value);
-                      clearFieldError('guestName');
-                    }}
-                    placeholder="Contoh: Budi Santoso"
-                    className={`w-full bg-charcoal-900 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors border ${
-                      formErrors.guestName
-                        ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
-                        : 'border-white/20 focus:border-gold-400'
-                    }`}
-                  />
-                  {formErrors.guestName && (
-                    <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1 font-medium animate-fade-in">
-                      <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-                      <span>{formErrors.guestName}</span>
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-medium text-white/70 mb-1">
-                    Nomor WhatsApp / HP Aktif <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    value={guestPhone}
-                    onChange={(e) => {
-                      setGuestPhone(e.target.value);
-                      clearFieldError('guestPhone');
-                    }}
-                    placeholder="Contoh: 081234567890"
-                    className={`w-full bg-charcoal-900 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors border ${
-                      formErrors.guestPhone
-                        ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
-                        : 'border-white/20 focus:border-gold-400'
-                    }`}
-                  />
-                  {formErrors.guestPhone ? (
-                    <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1 font-medium animate-fade-in">
-                      <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-                      <span>{formErrors.guestPhone}</span>
-                    </p>
-                  ) : (
-                    <span className="text-[10px] text-white/40 mt-0.5 block">
-                      Konfirmasi booking &amp; invoice dikirim ke WA ini
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-medium text-white/70 mb-1">
-                    Alamat Email <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={guestEmail}
-                    onChange={(e) => {
-                      setGuestEmail(e.target.value);
-                      clearFieldError('guestEmail');
-                    }}
-                    placeholder="nama@email.com"
-                    className={`w-full bg-charcoal-900 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors border ${
-                      formErrors.guestEmail
-                        ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
-                        : 'border-white/20 focus:border-gold-400'
-                    }`}
-                  />
-                  {formErrors.guestEmail && (
-                    <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1 font-medium animate-fade-in">
-                      <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-                      <span>{formErrors.guestEmail}</span>
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-medium text-white/70 mb-1">
-                    Catatan Khusus (Opsional)
-                  </label>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    rows={2}
-                    placeholder="Contoh: Jam kedatangan perkiraan pukul 14:00 WIB"
-                    className="w-full bg-charcoal-900 border border-white/20 rounded-xl px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-gold-400 transition-colors resize-none"
-                  />
-                </div>
-
-                {/* Keperluan Menginap */}
-                <div>
-                  <label className="block text-[11px] font-medium text-white/70 mb-1">
-                    Keperluan Menginap <span className="text-red-400">*</span>
-                  </label>
-                  <CustomSelect
-                    value={eventType}
-                    onChange={(val) => {
-                      setEventType(val);
-                      clearFieldError('eventType');
-                    }}
-                    size="sm"
-                    options={[
-                      { value: 'Acara Keluarga', label: 'Acara Keluarga' },
-                      { value: 'Gathering Kantor', label: 'Gathering Kantor' },
-                      { value: 'Arisan', label: 'Arisan' },
-                      { value: 'Reuni', label: 'Reuni' },
-                      { value: 'Lainnya', label: 'Lainnya (Sebutkan)' },
-                    ]}
-                  />
-                  {eventType === 'Lainnya' && (
-                    <div>
-                      <input
-                        type="text"
-                        value={eventTypeOther}
-                        onChange={(e) => {
-                          setEventTypeOther(e.target.value);
-                          clearFieldError('eventTypeOther');
-                        }}
-                        placeholder="Sebutkan keperluan acara / menginap..."
-                        className={`w-full mt-2 bg-charcoal-900 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors border ${
-                          formErrors.eventTypeOther
-                            ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
-                            : 'border-gold-500/50 focus:border-gold-400'
-                        }`}
-                      />
-                      {formErrors.eventTypeOther && (
-                        <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1 font-medium animate-fade-in">
-                          <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-                          <span>{formErrors.eventTypeOther}</span>
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Pertanyaan Pernah Menginap */}
-                <div>
-                  <label className="block text-[11px] font-medium text-white/70 mb-1">
-                    Apakah Anda pernah menginap sebelumnya?
-                  </label>
-                  <div className="grid grid-cols-2 gap-2 mt-1">
-                    <button
-                      type="button"
-                      onClick={() => setHasStayedBefore(true)}
-                      className={`py-1.5 px-3 rounded-xl text-xs font-semibold border transition-all ${
-                        hasStayedBefore
-                          ? 'bg-gold-500/20 border-gold-400 text-gold-300'
-                          : 'bg-charcoal-900 border-white/10 text-white/60 hover:text-white'
-                      }`}
-                    >
-                      Ya, Pernah
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setHasStayedBefore(false)}
-                      className={`py-1.5 px-3 rounded-xl text-xs font-semibold border transition-all ${
-                        !hasStayedBefore
-                          ? 'bg-gold-500/20 border-gold-400 text-gold-300'
-                          : 'bg-charcoal-900 border-white/10 text-white/60 hover:text-white'
-                      }`}
-                    >
-                      Belum Pernah
-                    </button>
-                  </div>
-                </div>
-
-                {/* Checkbox Persetujuan Tata Tertib */}
-                <div className="pt-2 border-t border-white/10">
-                  <label className="flex items-start gap-2.5 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={agreedTerms}
-                      onChange={(e) => {
-                        setAgreedTerms(e.target.checked);
-                        clearFieldError('agreedTerms');
-                      }}
-                      className="mt-0.5 rounded border-white/30 bg-charcoal-900 text-gold-500 focus:ring-gold-400 w-4 h-4 cursor-pointer"
-                    />
-                    <span className="text-[11px] text-white/80 group-hover:text-white transition-colors leading-relaxed">
-                      Saya menyetujui{' '}
-                      <Link
-                        href="/tata-tertib"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-gold-400 font-semibold underline hover:text-gold-300 transition-colors"
-                      >
-                        tata tertib dan ketentuan
-                      </Link>{' '}
-                      menginap di {villa.name || 'villa'}.
-                    </span>
-                  </label>
-                  {formErrors.agreedTerms && (
-                    <p className="text-[11px] text-red-400 mt-1.5 flex items-center gap-1 font-medium animate-fade-in">
-                      <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-                      <span>{formErrors.agreedTerms}</span>
-                    </p>
-                  )}
-                </div>
-              </div>
+              </form>
             </div>
-          </div>
-
-          {/* ================= FIXED / FLOATING STICKY BOTTOM ACTION BAR ================= */}
-            <div className="p-3.5 sm:p-4 bg-charcoal-950/95 backdrop-blur-xl border-t border-white/15 flex-shrink-0 z-30 shadow-[0_-8px_25px_rgba(0,0,0,0.5)]">
-              {/* Tombol kembali ke kalender di versi mobile */}
-              <button
-                type="button"
-                onClick={() => setMobileTab('calendar')}
-                className="lg:hidden w-full mb-2.5 py-1.5 px-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[11px] text-gold-300 font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <CalendarIcon className="w-3.5 h-3.5 text-gold-400" />
-                <span>&larr; Lihat / Ubah Tanggal di Kalender</span>
-              </button>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 disabled:opacity-50 disabled:cursor-not-allowed text-charcoal-950 font-bold py-3.5 px-4 rounded-xl tracking-wider text-xs uppercase transition-all duration-300 transform active:scale-[0.98] shadow-lg shadow-gold-500/25 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-charcoal-950 border-t-transparent rounded-full animate-spin" />
-                    <span>Memproses Reservasi...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>BUAT RESERVASI &amp; LANJUT KE PEMBAYARAN</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-
-              <div className="flex items-center justify-between mt-2 px-1 text-[11px] text-white/50">
-                <span className="truncate flex items-center gap-1 text-[10.5px]">
-                  <CheckCircle2 className="w-3 h-3 text-gold-400 flex-shrink-0" />
-                  Konfirmasi Instan via WhatsApp
-                </span>
-                <Link
-                  href="/cek-booking"
-                  onClick={triggerClose}
-                  className="text-[10.5px] text-white/50 hover:text-gold-400 transition-colors underline whitespace-nowrap"
-                >
-                  Cek Reservasi
-                </Link>
-              </div>
-            </div>
-          </form>
-        </div>
-        </>
+          </>
         )}
       </div>
     </div>
@@ -1459,9 +1519,8 @@ function MonthBlock({
         {DAY_NAMES_ID.map((d, i) => (
           <span
             key={i}
-            className={`text-xs font-bold uppercase tracking-wider py-1 ${
-              i === 0 || i === 6 ? 'text-gold-600' : 'text-gray-500'
-            }`}
+            className={`text-xs font-bold uppercase tracking-wider py-1 ${i === 0 || i === 6 ? 'text-gold-600' : 'text-gray-500'
+              }`}
           >
             {d}
           </span>
@@ -1536,13 +1595,12 @@ function MonthBlock({
               {/* Angka Tanggal */}
               <div className="w-full flex justify-center pt-0.5">
                 <span
-                  className={`text-xs sm:text-sm leading-tight ${
-                    isCheckIn || isCheckOut
+                  className={`text-xs sm:text-sm leading-tight ${isCheckIn || isCheckOut
                       ? 'text-gold-400 font-extrabold'
                       : isBlocked
-                      ? 'text-gray-400 font-semibold'
-                      : 'font-bold text-charcoal-900'
-                  }`}
+                        ? 'text-gray-400 font-semibold'
+                        : 'font-bold text-charcoal-900'
+                    }`}
                 >
                   {String(dayNumber).padStart(2, '0')}
                 </span>
@@ -1561,11 +1619,10 @@ function MonthBlock({
                 ) : (
                   <div className="w-full flex items-center justify-center leading-none pb-0.5">
                     <span
-                      className={`text-[8px] sm:text-[10px] font-bold tracking-tight whitespace-nowrap leading-none ${
-                        isCheckIn || isCheckOut
+                      className={`text-[8px] sm:text-[10px] font-bold tracking-tight whitespace-nowrap leading-none ${isCheckIn || isCheckOut
                           ? 'text-white'
                           : 'text-charcoal-800 group-hover:text-gold-700'
-                      }`}
+                        }`}
                     >
                       {formatIdPrice(price)}
                     </span>

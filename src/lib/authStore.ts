@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { buildApiUrl } from '@/lib/utils/api'
 
 export interface User {
   id_user: number
@@ -39,12 +40,13 @@ interface AuthState {
   isGuest: boolean
   isInitialized: boolean
   login: (token: string, user: User) => void
+  updateUser: (user: Partial<User>) => void
   loginAsGuest: () => void
   logout: () => void
   initialize: () => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   token: null,
   user: null,
   isAuthenticated: false,
@@ -55,6 +57,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.setItem('auth_user', JSON.stringify(user))
     localStorage.removeItem('auth_guest')
     set({ token, user, isAuthenticated: true, isGuest: false })
+  },
+  updateUser: (updatedFields) => {
+    const current = get().user
+    if (!current) return
+    const newUser = { ...current, ...updatedFields }
+    localStorage.setItem('auth_user', JSON.stringify(newUser))
+    set({ user: newUser })
   },
   loginAsGuest: () => {
     localStorage.setItem('auth_guest', 'true')
@@ -74,8 +83,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     // Single Sign-Out: hit backend Yii2 agar session server juga terhapus
     if (currentToken) {
-      const backendBase = process.env.NEXT_PUBLIC_SIPKK_BACKEND_BASE_URL || 'https://sipkk-new.mediaciptainformasi.co.id'
-      fetch(`${backendBase}/api/logout`, {
+      fetch(buildApiUrl('/api/logout'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${currentToken}`,
