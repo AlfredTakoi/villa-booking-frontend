@@ -16,8 +16,10 @@ function VerifyEmailContent() {
 
   const regId = searchParams.get('reg_id') || '';
   const emailParam = searchParams.get('email') || '';
+  const initialDevOtp = searchParams.get('dev_otp') || '';
 
   const [otp, setOtp] = useState(['', '', '', '']);
+  const [devOtp, setDevOtp] = useState(initialDevOtp);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -38,10 +40,14 @@ function VerifyEmailContent() {
     }
   }, [countdown]);
 
-  // Auto-focus kotak pertama saat load
+  // Auto-focus kotak pertama saat load / isi jika ada devOtp
   useEffect(() => {
-    inputRefs.current[0]?.focus();
-  }, []);
+    if (initialDevOtp && initialDevOtp.length === 4) {
+      setOtp(initialDevOtp.split(''));
+    } else {
+      inputRefs.current[0]?.focus();
+    }
+  }, [initialDevOtp]);
 
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -159,11 +165,16 @@ function VerifyEmailContent() {
       }
 
       if (data.success) {
-        setResendMessage('Kode OTP baru telah dikirimkan ke email Anda.');
+        setResendMessage('Kode OTP baru telah diproses.');
         setCountdown(60);
         setCanResend(false);
-        setOtp(['', '', '', '']);
-        inputRefs.current[0]?.focus();
+        if (data.debug_otp) {
+          setDevOtp(data.debug_otp);
+          setOtp(data.debug_otp.split(''));
+        } else {
+          setOtp(['', '', '', '']);
+          inputRefs.current[0]?.focus();
+        }
       } else {
         setError(data.message || 'Gagal mengirim ulang OTP.');
       }
@@ -200,6 +211,9 @@ function VerifyEmailContent() {
             <img
               src={resolveMediaUrl(villa.logo_url)}
               alt={villa.name || 'Villa Casa Anandefa'}
+              onError={(e) => {
+                e.currentTarget.src = resolveMediaUrl('/villa-logo.png');
+              }}
               className="w-16 h-16 mx-auto object-contain mb-3"
             />
           </Link>
@@ -232,6 +246,20 @@ function VerifyEmailContent() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
+              {devOtp && (
+                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-sans">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold uppercase tracking-wider text-[11px] text-amber-800">Mode Pengembangan / Lokal</span>
+                  </div>
+                  <p className="text-amber-800 mb-1.5">
+                    Kode OTP Anda: <strong className="px-2 py-0.5 rounded bg-amber-200/80 font-mono text-sm tracking-widest text-amber-950 font-bold">{devOtp}</strong>
+                  </p>
+                  <p className="text-[11px] text-amber-700/80 leading-normal">
+                    Kode telah diisi otomatis. Anda dapat langsung mengklik tombol <strong>&quot;Verifikasi &amp; Masuk&quot;</strong> di bawah.
+                  </p>
+                </div>
+              )}
+
               {error && (
                 <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-sans flex items-start gap-2">
                   <span className="shrink-0 mt-0.5">⚠️</span>

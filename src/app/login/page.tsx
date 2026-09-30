@@ -88,6 +88,9 @@ export default function LoginPage() {
             <img
               src={resolveMediaUrl(villa.logo_url)}
               alt={villa.name || 'Villa Casa Anandefa'}
+              onError={(e) => {
+                e.currentTarget.src = resolveMediaUrl('/villa-logo.png');
+              }}
               className="w-20 h-20 mx-auto object-contain mb-4"
             />
           </Link>

@@ -24,6 +24,9 @@ export default function Footer() {
                 <img
                   src={resolveMediaUrl(villa.logo_url)}
                   alt={villa.system_title || villa.name || 'Casa Anandefa'}
+                  onError={(e) => {
+                    e.currentTarget.src = resolveMediaUrl('/villa-logo.png');
+                  }}
                   className="w-full h-full object-contain"
                 />
               </div>

@@ -85,7 +85,7 @@ export default function RegisterPage() {
           phone: phone.trim(),
           password,
           re_password: rePassword,
-          kategori_akses: 'masyarakat_umum',
+          kategori_akses: 'tamu',
           tujuan_akses_lainnya: 'Reservasi Villa Casa Anandefa',
         }),
       });
@@ -101,17 +101,19 @@ export default function RegisterPage() {
 
       if (data.success && data.registration_id) {
         // Pendaftaran berhasil, arahkan ke verifikasi OTP email
+        const otpQuery = data.debug_otp ? `&dev_otp=${encodeURIComponent(data.debug_otp)}` : '';
         router.push(
           `/verify-email?reg_id=${data.registration_id}&email=${encodeURIComponent(
             email.trim().toLowerCase()
-          )}`
+          )}${otpQuery}`
         );
       } else if (data.code === 'EMAIL_PENDING_RECOVERY' && data.registration_id) {
         // Akun sudah pernah daftar tapi belum verifikasi OTP
+        const otpQuery = data.debug_otp ? `&dev_otp=${encodeURIComponent(data.debug_otp)}` : '';
         router.push(
           `/verify-email?reg_id=${data.registration_id}&email=${encodeURIComponent(
             email.trim().toLowerCase()
-          )}&recovered=1`
+          )}&recovered=1${otpQuery}`
         );
       } else {
         if (data.errors) {
@@ -151,6 +153,9 @@ export default function RegisterPage() {
             <img
               src={resolveMediaUrl(villa.logo_url)}
               alt={villa.name || 'Villa Casa Anandefa'}
+              onError={(e) => {
+                e.currentTarget.src = resolveMediaUrl('/villa-logo.png');
+              }}
               className="w-20 h-20 mx-auto object-contain mb-4"
             />
           </Link>

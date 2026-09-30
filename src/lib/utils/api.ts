@@ -8,15 +8,23 @@
  */
 
 export function getBackendBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_SIPKK_BACKEND_BASE_URL) {
-    return process.env.NEXT_PUBLIC_SIPKK_BACKEND_BASE_URL.replace(/\/+$/, '');
-  }
+  // Prioritas 1: Deteksi runtime browser langsung dari URL yang sedang diakses
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') {
+    if (host.includes('alfredtakoi.net')) {
+      return 'https://alfredtakoi.net/villa-admin';
+    }
+    if (host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.')) {
       return 'http://localhost/booking-app';
     }
   }
+
+  // Prioritas 2: Environment variables
+  if (process.env.NEXT_PUBLIC_SIPKK_BACKEND_BASE_URL) {
+    const envUrl = process.env.NEXT_PUBLIC_SIPKK_BACKEND_BASE_URL.replace(/\/+$/, '');
+    if (envUrl) return envUrl;
+  }
+
   return 'https://alfredtakoi.net/villa-admin';
 }
 
@@ -61,8 +69,13 @@ export function buildApiUrl(path: string): string {
  * - External URLs (https://images.unsplash.com/...)
  */
 export function resolveMediaUrl(url?: string | null, fallback = '/villa-logo.png'): string {
-  const target = (url || fallback || '').trim();
+  let target = (url || fallback || '').trim();
   if (!target) return `${FRONTEND_BASE_PATH}/villa-logo.png`;
+
+  // Fix HTTPS di localhost (Laragon berjalan di HTTP port 80, bukan HTTPS)
+  if (target.startsWith('https://localhost') || target.startsWith('https://127.0.0.1')) {
+    target = target.replace(/^https:/, 'http:');
+  }
 
   // Absolute URLs (http/https/data/blob)
   if (
@@ -74,8 +87,15 @@ export function resolveMediaUrl(url?: string | null, fallback = '/villa-logo.png
     return target;
   }
 
-  // Protocol-relative (e.g. //alfredtakoi.net/villa-admin/file-upload/...)
+  // Protocol-relative (e.g. //localhost/... atau //alfredtakoi.net/...)
   if (target.startsWith('//')) {
+    if (
+      target.startsWith('//localhost') ||
+      target.startsWith('//127.0.0.1') ||
+      (typeof window !== 'undefined' && window.location.protocol === 'http:')
+    ) {
+      return `http:${target}`;
+    }
     return `https:${target}`;
   }
 

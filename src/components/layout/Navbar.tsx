@@ -117,6 +117,9 @@ export default function Navbar() {
               <img
                 src={resolveMediaUrl(villa.logo_url)}
                 alt={villa.system_title || villa.name || 'Villa Casa Anandefa'}
+                onError={(e) => {
+                  e.currentTarget.src = resolveMediaUrl('/villa-logo.png');
+                }}
                 className="w-full h-full object-cover transition-transform duration-300"
               />
             </div>
