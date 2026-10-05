@@ -74,6 +74,7 @@ function BookingPaymentContent() {
   const [customBankName, setCustomBankName] = useState<string>('');
   const [accountHolder, setAccountHolder] = useState<string>('');
   const [transferredAmount, setTransferredAmount] = useState<string>('');
+  const [paymentDate, setPaymentDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -168,6 +169,7 @@ function BookingPaymentContent() {
               }
             }
             if (d.payment.account_holder) setAccountHolder(d.payment.account_holder);
+            if (d.payment.payment_date) setPaymentDate(d.payment.payment_date.split('T')[0]);
           }
         } else {
           setFetchError(dataStatus.message || 'Data reservasi tidak ditemukan.');
@@ -278,6 +280,7 @@ function BookingPaymentContent() {
       formData.append('bank_name', effectiveBankName);
       formData.append('account_holder', accountHolder);
       formData.append('transferred_amount', transferredAmount);
+      formData.append('payment_date', paymentDate);
       formData.append('proof_image', proofFile);
 
       const res = await fetch(buildApiUrl('/api/bookings/upload-proof'), {
@@ -302,6 +305,7 @@ function BookingPaymentContent() {
             bank_name: effectiveBankName,
             account_holder: accountHolder,
             transferred_amount: parseFloat(transferredAmount) || prev?.total_price || 0,
+            payment_date: paymentDate,
             proof_image_url: uploadedUrl,
           },
         }));
@@ -903,6 +907,19 @@ function BookingPaymentContent() {
 
                   <div>
                     <label className="block text-xs font-bold text-charcoal-800 uppercase tracking-wider mb-1.5">
+                      Tanggal Transfer
+                    </label>
+                    <input
+                      type="date"
+                      value={paymentDate}
+                      onChange={(e) => setPaymentDate(e.target.value)}
+                      className="w-full bg-sand-50 border border-sand-300 rounded-xl px-4 py-2.5 text-sm text-charcoal-900 focus:outline-none focus:ring-2 focus:ring-gold-500/40"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-charcoal-800 uppercase tracking-wider mb-1.5">
                       Upload Foto / File Bukti Transfer
                     </label>
                     <input
@@ -983,6 +1000,10 @@ function BookingPaymentContent() {
               <div className="flex justify-between">
                 <span className="text-charcoal-800/60">Atas Nama:</span>
                 <span className="font-bold text-charcoal-900">{accountHolder || '-'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-charcoal-800/60">Tanggal Transfer:</span>
+                <span className="font-bold text-charcoal-900">{paymentDate || '-'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-charcoal-800/60">Nominal:</span>
