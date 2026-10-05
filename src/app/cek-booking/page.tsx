@@ -256,6 +256,20 @@ export default function CheckBookingPage() {
             Menunggu Verifikasi Admin
           </span>
         );
+      case 'expired':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-100 text-rose-800">
+            <XCircle className="w-3.5 h-3.5 text-rose-600" />
+            Kadaluarsa (Dibatalkan)
+          </span>
+        );
+      case 'cancelled':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-800">
+            <XCircle className="w-3.5 h-3.5 text-gray-600" />
+            Dibatalkan
+          </span>
+        );
       case 'rejected':
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-100 text-red-800">
@@ -540,6 +554,33 @@ export default function CheckBookingPage() {
                     <span>Lihat Bukti Transfer yang Telah Diunggah</span>
                     <ArrowRight className="w-4 h-4" />
                   </Link>
+                )}
+
+                {result.status === 'expired' && (
+                  <div className="w-full bg-rose-50 border border-rose-200 rounded-2xl p-4 sm:p-5">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-rose-100 flex items-center justify-center">
+                        <XCircle className="w-5 h-5 text-rose-600" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-rose-900 mb-1">
+                          Reservasi Kadaluarsa & Dibatalkan Otomatis
+                        </h4>
+                        <p className="text-xs text-rose-700 leading-relaxed">
+                          Batas waktu upload pembayaran untuk kode reservasi ini telah habis. Sistem telah membatalkan pemesanan dan tanggal di kalender sudah dibuka kembali untuk reservasi tamu lain.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Link
+                        href="/"
+                        className="inline-flex items-center gap-1.5 bg-rose-600 text-white px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-rose-700 transition-colors shadow-sm"
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Pesan Ulang di Kalender</span>
+                      </Link>
+                    </div>
+                  </div>
                 )}
 
                 {result.status === 'rejected' && (

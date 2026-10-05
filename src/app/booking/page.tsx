@@ -380,6 +380,11 @@ function BookingPaymentContent() {
       return;
     }
 
+    if (isExpired) {
+      setUploadError('Batas waktu pembayaran telah habis (Kadaluarsa). Reservasi otomatis dibatalkan dan bukti pembayaran tidak dapat diunggah.');
+      return;
+    }
+
     setIsUploading(true);
 
     try {
@@ -421,6 +426,13 @@ function BookingPaymentContent() {
           },
         }));
       } else {
+        if (result.status === 'expired' || (result.message && result.message.toLowerCase().includes('kadaluarsa'))) {
+          setBookingData((prev: any) => ({
+            ...prev,
+            status: 'expired',
+            is_payment_expired: true,
+          }));
+        }
         setUploadError(result.message || 'Gagal mengunggah bukti transfer.');
       }
     } catch (err) {
@@ -559,8 +571,11 @@ function BookingPaymentContent() {
   }
 
   // KONDISI 4: Data Reservasi Ditemukan -> Tampilkan Rekening & Form Upload Pembayaran
+  const isExpired = bookingData.status === 'expired' || bookingData.is_payment_expired || timeLeft.isExpired;
+  const isCancelled = bookingData.status === 'cancelled';
+  const isRejected = bookingData.status === 'rejected';
   const isConfirmed = bookingData.status === 'confirmed';
-  const isWaitingConfirmation = bookingData.status === 'waiting_confirmation' || uploadSuccess;
+  const isWaitingConfirmation = !isExpired && (bookingData.status === 'waiting_confirmation' || uploadSuccess);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -595,6 +610,16 @@ function BookingPaymentContent() {
             <Clock className="w-4 h-4 text-amber-600" />
             Menunggu Verifikasi Admin
           </span>
+        ) : isExpired ? (
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] text-red-700 bg-red-100 px-4 py-1.5 rounded-full mb-3">
+            <AlertCircle className="w-4 h-4 text-red-600" />
+            Reservasi Kadaluarsa (Dibatalkan)
+          </span>
+        ) : isCancelled || isRejected ? (
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] text-gray-700 bg-gray-200 px-4 py-1.5 rounded-full mb-3">
+            <AlertCircle className="w-4 h-4 text-gray-600" />
+            {isRejected ? 'Reservasi Ditolak' : 'Reservasi Dibatalkan'}
+          </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] text-gold-700 bg-gold-200 px-4 py-1.5 rounded-full mb-3">
             <Clock className="w-4 h-4 text-gold-600" />
@@ -603,11 +628,23 @@ function BookingPaymentContent() {
         )}
 
         <h1 className="font-serif text-3xl sm:text-4xl font-bold text-charcoal-900 mt-2 mb-2">
-          {isConfirmed ? 'Reservasi Anda Telah Terkonfirmasi!' : 'Instruksi Pembayaran Transfer'}
+          {isConfirmed
+            ? 'Reservasi Anda Telah Terkonfirmasi!'
+            : isExpired
+            ? 'Batas Waktu Pembayaran Telah Habis'
+            : isCancelled
+            ? 'Reservasi Dibatalkan'
+            : isRejected
+            ? 'Reservasi Ditolak'
+            : 'Instruksi Pembayaran Transfer'}
         </h1>
         <p className="text-sm text-charcoal-800/70 font-light">
           {isConfirmed
             ? `Terima kasih, pembayaran Anda telah berhasil kami terima. Sampai jumpa di ${villa.name || 'Villa Casa Anandefa'}!`
+            : isExpired
+            ? 'Batas waktu upload pembayaran untuk reservasi ini telah habis. Reservasi otomatis dibatalkan dan tanggal di kalender telah dibuka kembali untuk pemesanan lain.'
+            : isCancelled || isRejected
+            ? 'Status reservasi ini sudah tidak aktif. Silakan hubungi admin kami untuk informasi lebih lanjut.'
             : 'Silakan transfer sejumlah nominal tagihan ke rekening resmi villa di bawah ini lalu unggah bukti transfer Anda.'}
         </p>
       </div>
@@ -899,7 +936,41 @@ function BookingPaymentContent() {
                 Konfirmasi Bukti Transfer
               </h3>
 
-              {!isReuploading && (uploadSuccess || bookingData.status === 'waiting_confirmation') ? (
+              {isExpired ? (
+                <div className="p-6 sm:p-8 bg-red-50 border border-red-200 rounded-2xl text-center space-y-4">
+                  <div className="w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+                    <Clock className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-red-950 text-base">Reservasi Telah Kadaluarsa</h4>
+                    <p className="text-xs text-red-800/80 mt-1 leading-relaxed max-w-md mx-auto">
+                      Batas waktu upload bukti pembayaran telah habis pada <strong>{timeLeft.formattedDeadline || bookingData.payment_deadline}</strong>.
+                      Reservasi ini otomatis dibatalkan dan tanggal yang sebelumnya dibooked kini dapat dipesan kembali oleh tamu lain.
+                    </p>
+                    <p className="text-xs text-charcoal-800/70 mt-2 font-medium">
+                      Anda tidak dapat mengunggah bukti pembayaran lagi untuk reservasi ini.
+                    </p>
+                  </div>
+                  <div className="pt-2 flex flex-wrap justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(true)}
+                      className="inline-flex items-center gap-2 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 hover:to-gold-500 text-charcoal-950 px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider shadow-md transition-all"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      <span>Buat Reservasi Baru</span>
+                    </button>
+                    <a
+                      href={`https://wa.me/628164819298?text=Halo%20Admin%2C%20saya%20ingin%20menanyakan%20status%20reservasi%20saya%20${bookingData.booking_code}`}
+                      target="_blank"
+                      className="inline-flex items-center gap-2 bg-charcoal-900 hover:bg-charcoal-850 text-white px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider shadow-md transition-all"
+                    >
+                      <MessageCircle className="w-4 h-4 text-emerald-400" />
+                      <span>Chat Admin via WA</span>
+                    </a>
+                  </div>
+                </div>
+              ) : !isReuploading && (uploadSuccess || bookingData.status === 'waiting_confirmation') ? (
                 <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-4">
                   <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-6 h-6" />
