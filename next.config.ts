@@ -31,29 +31,30 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  async rewrites() {
-    if (isExport) {
-      return [];
-    }
-    return {
-      fallback: [
-        // Semua /api/* diteruskan ke backend Yii2 di Laragon
-        {
-          source: '/api/:path*',
-          destination: `${backendBaseUrl}/api/:path*`,
+  ...(!isExport
+    ? {
+        async rewrites() {
+          return {
+            fallback: [
+              // Semua /api/* diteruskan ke backend Yii2 di Laragon
+              {
+                source: '/api/:path*',
+                destination: `${backendBaseUrl}/api/:path*`,
+              },
+              // Static uploads dari backend Laragon
+              {
+                source: '/uploads/:path*',
+                destination: `${backendBaseUrl}/uploads/:path*`,
+              },
+              {
+                source: '/booking-app/uploads/:path*',
+                destination: `${backendBaseUrl}/uploads/:path*`,
+              },
+            ],
+          };
         },
-        // Static uploads dari backend Laragon
-        {
-          source: '/uploads/:path*',
-          destination: `${backendBaseUrl}/uploads/:path*`,
-        },
-        {
-          source: '/booking-app/uploads/:path*',
-          destination: `${backendBaseUrl}/uploads/:path*`,
-        },
-      ],
-    };
-  },
+      }
+    : {}),
 };
 
 export default nextConfig;

@@ -1,20 +1,6 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Outfit } from "next/font/google";
 import "./globals.css";
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-  display: "swap",
-  preload: false,
-});
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-  display: "swap",
-  preload: false,
-});
+import { VillaProvider } from "@/context/VillaContext";
 
 export async function generateMetadata(): Promise<Metadata> {
   const backendBase =
@@ -69,15 +55,21 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-import { VillaProvider } from "@/context/VillaContext";
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${playfair.variable} ${outfit.variable}`} suppressHydrationWarning>
+    <html lang="id" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600;1,700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="font-sans antialiased bg-sand-50 text-charcoal-900" suppressHydrationWarning>
         <VillaProvider>
           {children}
