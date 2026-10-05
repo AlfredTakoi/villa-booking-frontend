@@ -34,9 +34,9 @@ const bookingFormSchema = z
     guestPhone: z
       .string()
       .trim()
-      .min(9, 'Nomor WhatsApp minimal 9 digit')
-      .max(16, 'Nomor WhatsApp maksimal 16 digit')
-      .regex(/^[0-9+() -]+$/, 'Format nomor WhatsApp hanya boleh angka dan simbol telepon'),
+      .min(6, 'Nomor WhatsApp minimal 6 digit')
+      .max(15, 'Nomor WhatsApp maksimal 15 digit')
+      .regex(/^[0-9]+$/, 'Nomor WhatsApp hanya boleh berisi angka'),
     guestEmail: z
       .string()
       .trim()
@@ -1194,20 +1194,33 @@ export default function OnlineBookingModal({
                   <label className="block text-[11px] font-medium text-white/70 mb-1">
                     Nomor WhatsApp / HP Aktif <span className="text-red-400">*</span>
                   </label>
-                  <input
-                    type="tel"
-                    value={guestPhone}
-                    onChange={(e) => {
-                      setGuestPhone(e.target.value);
-                      clearFieldError('guestPhone');
-                    }}
-                    placeholder="Contoh: 081234567890"
-                    className={`w-full bg-charcoal-900 rounded-xl px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors border ${
-                      formErrors.guestPhone
-                        ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/10'
-                        : 'border-white/20 focus:border-gold-400'
-                    }`}
-                  />
+                  <div className={`flex rounded-xl overflow-hidden border transition-colors ${
+                    formErrors.guestPhone
+                      ? 'border-red-500 ring-1 ring-red-500/50'
+                      : 'border-white/20 focus-within:border-gold-400'
+                  }`}>
+                    <span className="flex items-center px-3 bg-white/10 text-white/60 text-xs font-semibold border-r border-white/20 select-none whitespace-nowrap">
+                      +62
+                    </span>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      value={guestPhone}
+                      onChange={(e) => {
+                        const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 15);
+                        setGuestPhone(digitsOnly);
+                        clearFieldError('guestPhone');
+                      }}
+                      placeholder="81234567890"
+                      maxLength={15}
+                      className={`flex-1 min-w-0 bg-charcoal-900 px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none transition-colors ${
+                        formErrors.guestPhone ? 'bg-red-500/10' : ''
+                      }`}
+                    />
+                    <span className="flex items-center pr-2.5 text-[10px] text-white/30 whitespace-nowrap select-none">
+                      {guestPhone.length}/15
+                    </span>
+                  </div>
                   {formErrors.guestPhone ? (
                     <p className="text-[11px] text-red-400 mt-1 flex items-center gap-1 font-medium animate-fade-in">
                       <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
@@ -1247,13 +1260,21 @@ export default function OnlineBookingModal({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-white/70 mb-1">
-                    Catatan Khusus (Opsional)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] font-medium text-white/70">
+                      Catatan Khusus (Opsional)
+                    </label>
+                    <span className={`text-[10px] font-medium ${
+                      notes.length > 50 ? 'text-red-400' : notes.length >= 40 ? 'text-amber-400' : 'text-white/30'
+                    }`}>
+                      {notes.length}/50
+                    </span>
+                  </div>
                   <textarea
                     value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    onChange={(e) => setNotes(e.target.value.slice(0, 50))}
                     rows={2}
+                    maxLength={50}
                     placeholder="Contoh: Jam kedatangan perkiraan pukul 14:00 WIB"
                     className="w-full bg-charcoal-900 border border-white/20 rounded-xl px-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-gold-400 transition-colors resize-none"
                   />
