@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
@@ -138,72 +138,97 @@ function BookingPaymentContent() {
   }, [searchParams]);
 
   // Ambil detail reservasi ketika token atau code tersedia
-  useEffect(() => {
+  const fetchBookingDetails = useCallback(async (isSilent = false) => {
     if (!token && !code) {
       setIsLoading(false);
       setBookingData(null);
       return;
     }
 
-    async function fetchBookingDetails(isSilent = false) {
-      if (!isSilent) setIsLoading(true);
-      setFetchError('');
+    if (!isSilent) setIsLoading(true);
+    setFetchError('');
 
-      try {
-        const statusEndpoint = token
-          ? `/api/booking-status?token=${encodeURIComponent(token)}`
-          : `/api/booking-status?code=${encodeURIComponent(code)}`;
+    try {
+      const statusEndpoint = token
+        ? `/api/booking-status?token=${encodeURIComponent(token)}`
+        : `/api/booking-status?code=${encodeURIComponent(code)}`;
 
-        const [resStatus, resVilla] = await Promise.all([
-          fetch(buildApiUrl(statusEndpoint)),
-          fetch(buildApiUrl('/api/villa')),
-        ]);
+      const [resStatus, resVilla] = await Promise.all([
+        fetch(buildApiUrl(statusEndpoint)),
+        fetch(buildApiUrl('/api/villa')),
+      ]);
 
-        const dataStatus = await resStatus.json();
-        const dataVilla = await resVilla.json();
+      const dataStatus = await resStatus.json();
+      const dataVilla = await resVilla.json();
 
-        if (dataStatus.success && dataStatus.data) {
-          const d = dataStatus.data;
-          setBookingData(d);
-          if (d.booking_code && !code) {
-            setCode(d.booking_code);
-          }
-          if (d.payment_token && !token) {
-            setToken(d.payment_token);
-          }
-          const payable = d.payable_amount || (d.payment_type === 'dp' && d.dp_amount ? d.dp_amount : d.total_price);
-          setTransferredAmount(payable ? String(payable) : '');
-          if (d.payment) {
-            if (d.payment.bank_name) {
-              const prevBank = d.payment.bank_name;
-              if (masterBanks.includes(prevBank)) {
-                setSelectedBank(prevBank);
-              } else {
-                setSelectedBank('OTHER');
-                setCustomBankName(prevBank);
-              }
+      if (dataStatus.success && dataStatus.data) {
+        const d = dataStatus.data;
+        setBookingData(d);
+        if (d.booking_code && !code) {
+          setCode(d.booking_code);
+        }
+        if (d.payment_token && !token) {
+          setToken(d.payment_token);
+        }
+        const payable = d.payable_amount || (d.payment_type === 'dp' && d.dp_amount ? d.dp_amount : d.total_price);
+        setTransferredAmount(payable ? String(payable) : '');
+        if (d.payment) {
+          if (d.payment.bank_name) {
+            const prevBank = d.payment.bank_name;
+            if (masterBanks.includes(prevBank)) {
+              setSelectedBank(prevBank);
+            } else {
+              setSelectedBank('OTHER');
+              setCustomBankName(prevBank);
             }
-            if (d.payment.account_holder) setAccountHolder(d.payment.account_holder);
-            if (d.payment.payment_date) setPaymentDate(d.payment.payment_date.split('T')[0]);
           }
-        } else {
-          setFetchError(dataStatus.message || 'Data reservasi tidak ditemukan.');
-          setBookingData(null);
+          if (d.payment.account_holder) setAccountHolder(d.payment.account_holder);
+          if (d.payment.payment_date) setPaymentDate(d.payment.payment_date.split('T')[0]);
         }
-
-        if (dataVilla.success && dataVilla.data.bank_accounts) {
-          setBankAccounts(dataVilla.data.bank_accounts);
-        }
-      } catch (err) {
-        console.error('Failed to load booking details:', err);
-        setFetchError('Terjadi gangguan jaringan saat memuat data reservasi.');
-      } finally {
-        if (!isSilent) setIsLoading(false);
+      } else {
+        setFetchError(dataStatus.message || 'Data reservasi tidak ditemukan.');
+        setBookingData(null);
       }
-    }
 
+      if (dataVilla.success && dataVilla.data.bank_accounts) {
+        setBankAccounts(dataVilla.data.bank_accounts);
+      }
+    } catch (err) {
+      console.error('Failed to load booking details:', err);
+      setFetchError('Terjadi gangguan jaringan saat memuat data reservasi.');
+    } finally {
+      if (!isSilent) setIsLoading(false);
+    }
+  }, [token, code, masterBanks]);
+
+  useEffect(() => {
     fetchBookingDetails(uploadSuccess);
-  }, [token, code, uploadSuccess]);
+  }, [fetchBookingDetails, uploadSuccess]);
+
+  // Polling otomatis setiap 15 detik dan listener saat tab aktif kembali
+  useEffect(() => {
+    if (!token && !code) return;
+    if (bookingData && bookingData.status !== 'pending_payment') return;
+
+    const interval = setInterval(() => {
+      fetchBookingDetails(true);
+    }, 15000);
+
+    const handleVisibilityOrFocus = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchBookingDetails(true);
+      }
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+    };
+  }, [token, code, bookingData?.status, fetchBookingDetails]);
 
   // Sinkronkan pilihan bank jika masterBanks selesai dimuat setelah data reservasi
   useEffect(() => {
@@ -223,13 +248,22 @@ function BookingPaymentContent() {
     if (!bookingData) return;
 
     let deadlineDate: Date | null = null;
-    if (bookingData.payment_deadline_iso) {
-      deadlineDate = new Date(bookingData.payment_deadline_iso);
-    } else if (bookingData.payment_deadline) {
-      deadlineDate = new Date(bookingData.payment_deadline.replace(' ', 'T'));
-    } else if (bookingData.created_at) {
-      const expiryHours = Number(bookingData.payment_expiry_hours || villa.payment_expiry_hours || 24);
-      deadlineDate = new Date(new Date(bookingData.created_at.replace(' ', 'T')).getTime() + expiryHours * 3600 * 1000);
+    const expiryHours = Number(bookingData.payment_expiry_hours || villa.payment_expiry_hours || 24);
+
+    // Prioritaskan perhitungan dinamis dari created_at + expiryHours terkini
+    if (bookingData.created_at && expiryHours > 0) {
+      const createdTs = new Date(bookingData.created_at.replace(' ', 'T')).getTime();
+      if (!isNaN(createdTs)) {
+        deadlineDate = new Date(createdTs + expiryHours * 3600 * 1000);
+      }
+    }
+
+    if (!deadlineDate || isNaN(deadlineDate.getTime())) {
+      if (bookingData.payment_deadline_iso) {
+        deadlineDate = new Date(bookingData.payment_deadline_iso);
+      } else if (bookingData.payment_deadline) {
+        deadlineDate = new Date(bookingData.payment_deadline.replace(' ', 'T'));
+      }
     }
 
     if (!deadlineDate || isNaN(deadlineDate.getTime())) {
