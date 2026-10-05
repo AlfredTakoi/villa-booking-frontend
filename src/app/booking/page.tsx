@@ -83,6 +83,21 @@ function BookingPaymentContent() {
   const [isReuploading, setIsReuploading] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string>('');
 
+  // Countdown Timer State untuk Batas Waktu Pembayaran
+  const [timeLeft, setTimeLeft] = useState<{
+    hours: number;
+    minutes: number;
+    seconds: number;
+    isExpired: boolean;
+    formattedDeadline: string;
+  }>({
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    isExpired: false,
+    formattedDeadline: '',
+  });
+
   // Modal reservasi baru jika user belum memiliki kode
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
@@ -202,6 +217,68 @@ function BookingPaymentContent() {
       }
     }
   }, [masterBanks, bookingData]);
+
+  // Hitung mundur (countdown) batas waktu pembayaran
+  useEffect(() => {
+    if (!bookingData) return;
+
+    let deadlineDate: Date | null = null;
+    if (bookingData.payment_deadline_iso) {
+      deadlineDate = new Date(bookingData.payment_deadline_iso);
+    } else if (bookingData.payment_deadline) {
+      deadlineDate = new Date(bookingData.payment_deadline.replace(' ', 'T'));
+    } else if (bookingData.created_at) {
+      const expiryHours = Number(bookingData.payment_expiry_hours || villa.payment_expiry_hours || 24);
+      deadlineDate = new Date(new Date(bookingData.created_at.replace(' ', 'T')).getTime() + expiryHours * 3600 * 1000);
+    }
+
+    if (!deadlineDate || isNaN(deadlineDate.getTime())) {
+      return;
+    }
+
+    const formattedDeadline =
+      deadlineDate.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      }) +
+      ', ' +
+      deadlineDate.toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }) +
+      ' WIB';
+
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const distance = deadlineDate!.getTime() - now;
+
+      if (distance <= 0) {
+        setTimeLeft({
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+          isExpired: true,
+          formattedDeadline,
+        });
+      } else {
+        const hours = Math.floor(distance / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        setTimeLeft({
+          hours,
+          minutes,
+          seconds,
+          isExpired: false,
+          formattedDeadline,
+        });
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [bookingData, villa]);
 
   const handleSearchCode = (e: React.FormEvent) => {
     e.preventDefault();
@@ -581,8 +658,93 @@ function BookingPaymentContent() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Kolom Kiri: Rekening Bank Tujuan Transfer */}
+        <div className="space-y-6">
+          {/* Banner Countdown Timer Batas Pembayaran */}
+          {timeLeft.formattedDeadline && (
+            <div
+              className={`p-4 sm:p-5 rounded-2xl border transition-all shadow-sm ${
+                timeLeft.isExpired
+                  ? 'bg-red-50 border-red-200 text-red-950'
+                  : 'bg-gradient-to-r from-charcoal-900 via-charcoal-850 to-charcoal-900 border-gold-500/30 text-white'
+              }`}
+            >
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div
+                    className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      timeLeft.isExpired
+                        ? 'bg-red-100 text-red-600'
+                        : 'bg-gold-500/20 text-gold-400 border border-gold-500/30'
+                    }`}
+                  >
+                    <Clock className={`w-5 h-5 sm:w-6 sm:h-6 ${timeLeft.isExpired ? '' : 'animate-pulse'}`} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                          timeLeft.isExpired ? 'bg-red-200 text-red-800' : 'bg-gold-500/20 text-gold-400'
+                        }`}
+                      >
+                        {timeLeft.isExpired ? 'Waktu Pembayaran Berakhir' : 'Batas Waktu Pembayaran'}
+                      </span>
+                      <span className="text-[11px] opacity-75">
+                        {bookingData.payment_expiry_hours || villa.payment_expiry_hours || 24} Jam sejak pemesanan
+                      </span>
+                    </div>
+                    <p className="text-xs mt-1 opacity-90">
+                      {timeLeft.isExpired ? (
+                        <span>
+                          Batas transfer telah berakhir pada <strong>{timeLeft.formattedDeadline}</strong>. Silakan hubungi admin kami untuk konfirmasi ketersediaan tanggal.
+                        </span>
+                      ) : (
+                        <span>
+                          Selesaikan pembayaran &amp; upload bukti sebelum <strong>{timeLeft.formattedDeadline}</strong>.
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {!timeLeft.isExpired ? (
+                  <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10 self-stretch sm:self-auto justify-center">
+                    <div className="text-center min-w-[36px]">
+                      <span className="font-mono text-xl sm:text-2xl font-black text-gold-400 leading-none">
+                        {String(timeLeft.hours).padStart(2, '0')}
+                      </span>
+                      <span className="text-[9px] uppercase tracking-wider block text-white/60 mt-0.5">Jam</span>
+                    </div>
+                    <span className="text-gold-400 font-bold text-lg -mt-3.5">:</span>
+                    <div className="text-center min-w-[36px]">
+                      <span className="font-mono text-xl sm:text-2xl font-black text-gold-400 leading-none">
+                        {String(timeLeft.minutes).padStart(2, '0')}
+                      </span>
+                      <span className="text-[9px] uppercase tracking-wider block text-white/60 mt-0.5">Mnt</span>
+                    </div>
+                    <span className="text-gold-400 font-bold text-lg -mt-3.5">:</span>
+                    <div className="text-center min-w-[36px]">
+                      <span className="font-mono text-xl sm:text-2xl font-black text-gold-400 leading-none">
+                        {String(timeLeft.seconds).padStart(2, '0')}
+                      </span>
+                      <span className="text-[9px] uppercase tracking-wider block text-white/60 mt-0.5">Dtk</span>
+                    </div>
+                  </div>
+                ) : (
+                  <a
+                    href="https://wa.me/628164819298"
+                    target="_blank"
+                    className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors shadow-sm flex items-center gap-2 self-stretch sm:self-auto justify-center"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Hubungi Admin via WA</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Kolom Kiri: Rekening Bank Tujuan Transfer */}
           <div className="lg:col-span-6 space-y-6">
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-sand-300 shadow-sm space-y-6">
               <h3 className="font-serif text-lg font-bold text-charcoal-900 flex items-center gap-2 border-b border-sand-200 pb-3">
@@ -971,6 +1133,7 @@ function BookingPaymentContent() {
             </div>
           </div>
         </div>
+      </div>
       )}
 
       {/* Modal Dialog Notifikasi Berhasil Upload Bukti Pembayaran */}

@@ -28,6 +28,7 @@ export interface VillaProfileData {
   cover_image_url: string;
   policies: string;
   allow_guest_selection?: boolean;
+  payment_expiry_hours?: number;
   logo_url?: string;
   system_title?: string;
   meta_title?: string;
@@ -126,6 +127,7 @@ const defaultVilla: VillaProfileData = {
   cover_image_url: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1920&q=80',
   policies: '- Waktu Check-in: 14:00 WIB | Waktu Check-out: 12:00 WIB.\n- Tamu wajib menjaga ketenangan lingkungan setelah pukul 22:00 WIB.\n- Dilarang merokok di dalam ruangan kamar tidur (tersedia area merokok di area outdoor).\n- Kapasitas maksimal villa adalah 20 orang.\n- Hewan peliharaan tidak diperkenankan kecuali dengan izin khusus pihak manajemen.',
   allow_guest_selection: true,
+  payment_expiry_hours: 24,
   logo_url: resolveMediaUrl('/villa-logo.png?v=20260923'),
   system_title: 'Casa Anandefa',
   meta_title: 'Casa Anandefa | Sewa Villa Puncak Bogor',

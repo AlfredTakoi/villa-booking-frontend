@@ -1,3 +1,3 @@
-:HL["/villa/_next/static/chunks/01_mg86e~w7-0.css","style"]
+:HL["/villa/_next/static/chunks/0egg.v-.uq7u4.css","style"]
 :HC["/",""]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"booking","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"EULqXH-Xy3BOTOsI7xXi-"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"booking","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"Tb8yUXEdAfenix4Oe9IWD"}
