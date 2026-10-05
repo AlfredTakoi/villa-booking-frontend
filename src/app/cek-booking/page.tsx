@@ -23,6 +23,7 @@ import {
   Loader2,
   CalendarDays,
   UploadCloud,
+  Home,
 } from 'lucide-react';
 import { useVilla } from '@/context/VillaContext';
 
@@ -227,6 +228,20 @@ export default function CheckBookingPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'checked_in':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-100 text-sky-800">
+            <Home className="w-3.5 h-3.5 text-sky-600" />
+            Checked-In (Sedang Menginap)
+          </span>
+        );
+      case 'checked_out':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-800">
+            <CheckCircle2 className="w-3.5 h-3.5 text-slate-600" />
+            Checked-Out (Selesai)
+          </span>
+        );
       case 'confirmed':
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800">
@@ -351,13 +366,13 @@ export default function CheckBookingPage() {
                     <span className="text-xs font-bold block">2. Transfer Bank</span>
                     <span className="text-[10px]">{result.status === 'pending_payment' ? 'Menunggu' : '✓ Selesai'}</span>
                   </div>
-                  <div className={`p-3 rounded-2xl border ${result.status === 'waiting_confirmation' ? 'bg-amber-100 text-amber-900 border-amber-300 font-bold' : (result.status === 'confirmed' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-sand-50 text-charcoal-800/40 border-sand-200')}`}>
+                  <div className={`p-3 rounded-2xl border ${result.status === 'waiting_confirmation' ? 'bg-amber-100 text-amber-900 border-amber-300 font-bold' : (['confirmed', 'checked_in', 'checked_out'].includes(result.status) ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-sand-50 text-charcoal-800/40 border-sand-200')}`}>
                     <span className="text-xs font-bold block">3. Verifikasi Admin</span>
-                    <span className="text-[10px]">{result.status === 'waiting_confirmation' ? 'Diproses' : (result.status === 'confirmed' ? '✓ Selesai' : '-')}</span>
+                    <span className="text-[10px]">{result.status === 'waiting_confirmation' ? 'Diproses' : (['confirmed', 'checked_in', 'checked_out'].includes(result.status) ? '✓ Selesai' : '-')}</span>
                   </div>
-                  <div className={`p-3 rounded-2xl border ${result.status === 'confirmed' ? 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold' : 'bg-sand-50 text-charcoal-800/40 border-sand-200'}`}>
-                    <span className="text-xs font-bold block">4. Terkonfirmasi</span>
-                    <span className="text-[10px]">{result.status === 'confirmed' ? '✓ Lunas' : '-'}</span>
+                  <div className={`p-3 rounded-2xl border ${['confirmed', 'checked_in', 'checked_out'].includes(result.status) ? 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold' : 'bg-sand-50 text-charcoal-800/40 border-sand-200'}`}>
+                    <span className="text-xs font-bold block">4. {result.status === 'checked_in' ? 'Checked-In' : (result.status === 'checked_out' ? 'Checked-Out' : 'Terkonfirmasi')}</span>
+                    <span className="text-[10px]">{result.status === 'checked_in' ? '✓ Sedang Inap' : (result.status === 'checked_out' ? '✓ Selesai' : (result.status === 'confirmed' ? '✓ Lunas' : '-'))}</span>
                   </div>
                 </div>
               </div>
@@ -388,6 +403,18 @@ export default function CheckBookingPage() {
                       <span className="text-charcoal-800/60">Total Biaya:</span>{' '}
                       <strong className="text-success text-base">{result.total_price_formatted}</strong>
                     </div>
+                    {result.actual_check_in_at && (
+                      <div>
+                        <span className="text-charcoal-800/60">Waktu Masuk:</span>{' '}
+                        <strong className="text-sky-700">{result.actual_check_in_at}</strong>
+                      </div>
+                    )}
+                    {result.actual_check_out_at && (
+                      <div>
+                        <span className="text-charcoal-800/60">Waktu Keluar:</span>{' '}
+                        <strong className="text-slate-700">{result.actual_check_out_at}</strong>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -470,7 +497,7 @@ export default function CheckBookingPage() {
 
               {/* Action Buttons based on status */}
               <div className="pt-4 border-t border-sand-200 flex flex-col gap-4">
-                {result.status === 'confirmed' && (
+                {['confirmed', 'checked_in', 'checked_out'].includes(result.status) && (
                   <a
                     href={`/api/invoices/download?code=${result.booking_code}`}
                     target="_blank"
@@ -479,6 +506,20 @@ export default function CheckBookingPage() {
                     <Download className="w-4 h-4 text-gold-400" />
                     <span>Unduh Dokumen Invoice (PDF)</span>
                   </a>
+                )}
+
+                {result.status === 'checked_in' && (
+                  <div className="w-full bg-sky-50 border border-sky-200 rounded-2xl p-4 sm:p-5 flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-sky-100 flex items-center justify-center flex-shrink-0 text-sky-600">
+                      <Home className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-sky-900 mb-0.5">Tamu Sedang Menginap</h4>
+                      <p className="text-xs text-sky-700">
+                        Check-in telah berhasil tercatat. Untuk proses check-out saat masa inap selesai, Anda dapat menggunakan pemindai QR Scanner di aplikasi mobile atau menghubungi staf resepsionis villa.
+                      </p>
+                    </div>
+                  </div>
                 )}
 
                 {result.status === 'pending_payment' && (
