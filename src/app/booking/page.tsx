@@ -27,25 +27,51 @@ import {
 } from 'lucide-react';
 import { useVilla } from '@/context/VillaContext';
 
+const DEFAULT_BANKS = [
+  'BCA',
+  'Bank Mandiri',
+  'BRI',
+  'BNI',
+  'BSI',
+  'CIMB Niaga',
+  'Permata Bank',
+  'Bank Danamon',
+  'BTN',
+  'Panin Bank',
+  'OCBC NISP',
+  'Maybank Indonesia',
+  'Bank Mega',
+  'Bank Sinarmas',
+  'Bank BTPN / Jenius',
+  'Bank Jago',
+  'SeaBank',
+  'Allo Bank',
+  'Blu by BCA Digital',
+];
+
 function BookingPaymentContent() {
   const { villa } = useVilla();
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const initialToken = searchParams.get('token') || '';
   const initialCode = searchParams.get('code') || searchParams.get('booking_code') || '';
+  const [token, setToken] = useState<string>(initialToken);
   const [code, setCode] = useState<string>(initialCode);
-  const [inputCode, setInputCode] = useState<string>(initialCode);
+  const [inputCode, setInputCode] = useState<string>(initialToken || initialCode);
 
   const [bookingData, setBookingData] = useState<any>(null);
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(Boolean(initialCode));
+  const [isLoading, setIsLoading] = useState<boolean>(Boolean(initialToken || initialCode));
   const [fetchError, setFetchError] = useState<string>('');
 
   const [copiedAccount, setCopiedAccount] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
-  // Form Upload Bukti
-  const [bankName, setBankName] = useState<string>('BCA');
+  // Form Upload Bukti & Master Data Bank
+  const [masterBanks, setMasterBanks] = useState<string[]>(DEFAULT_BANKS);
+  const [selectedBank, setSelectedBank] = useState<string>('BCA');
+  const [customBankName, setCustomBankName] = useState<string>('');
   const [accountHolder, setAccountHolder] = useState<string>('');
   const [transferredAmount, setTransferredAmount] = useState<string>('');
   const [proofFile, setProofFile] = useState<File | null>(null);
@@ -59,15 +85,45 @@ function BookingPaymentContent() {
   // Modal reservasi baru jika user belum memiliki kode
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
+  const effectiveBankName = selectedBank === 'OTHER' ? customBankName.trim() : selectedBank;
+
   // Helper url bukti
   const resolveProofUrl = (url?: string | null) => {
     if (!url) return null;
     return resolveMediaUrl(url);
   };
 
-  // Ambil detail reservasi ketika code tersedia
+  // Ambil list master data bank dari backend CMS
   useEffect(() => {
-    if (!code) {
+    async function loadMasterBanks() {
+      try {
+        const res = await fetch(buildApiUrl('/api/banks'));
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const names = json.data.map((b: any) => b.bank_name).filter(Boolean);
+          if (names.length > 0) {
+            setMasterBanks(names);
+          }
+        }
+      } catch (err) {
+        // Fallback to DEFAULT_BANKS
+      }
+    }
+    loadMasterBanks();
+  }, []);
+
+  // Sinkronkan state saat URL query params berubah
+  useEffect(() => {
+    const qToken = searchParams.get('token') || '';
+    const qCode = searchParams.get('code') || searchParams.get('booking_code') || '';
+    if (qToken !== token) setToken(qToken);
+    if (qCode !== code) setCode(qCode);
+    if (qToken || qCode) setInputCode(qToken || qCode);
+  }, [searchParams]);
+
+  // Ambil detail reservasi ketika token atau code tersedia
+  useEffect(() => {
+    if (!token && !code) {
       setIsLoading(false);
       setBookingData(null);
       return;
@@ -78,8 +134,12 @@ function BookingPaymentContent() {
       setFetchError('');
 
       try {
+        const statusEndpoint = token
+          ? `/api/booking-status?token=${encodeURIComponent(token)}`
+          : `/api/booking-status?code=${encodeURIComponent(code)}`;
+
         const [resStatus, resVilla] = await Promise.all([
-          fetch(buildApiUrl(`/api/booking-status?code=${encodeURIComponent(code)}`)),
+          fetch(buildApiUrl(statusEndpoint)),
           fetch(buildApiUrl('/api/villa')),
         ]);
 
@@ -87,15 +147,30 @@ function BookingPaymentContent() {
         const dataVilla = await resVilla.json();
 
         if (dataStatus.success && dataStatus.data) {
-          setBookingData(dataStatus.data);
-          const payable = dataStatus.data.payable_amount || (dataStatus.data.payment_type === 'dp' && dataStatus.data.dp_amount ? dataStatus.data.dp_amount : dataStatus.data.total_price);
+          const d = dataStatus.data;
+          setBookingData(d);
+          if (d.booking_code && !code) {
+            setCode(d.booking_code);
+          }
+          if (d.payment_token && !token) {
+            setToken(d.payment_token);
+          }
+          const payable = d.payable_amount || (d.payment_type === 'dp' && d.dp_amount ? d.dp_amount : d.total_price);
           setTransferredAmount(payable ? String(payable) : '');
-          if (dataStatus.data.payment) {
-            if (dataStatus.data.payment.bank_name) setBankName(dataStatus.data.payment.bank_name);
-            if (dataStatus.data.payment.account_holder) setAccountHolder(dataStatus.data.payment.account_holder);
+          if (d.payment) {
+            if (d.payment.bank_name) {
+              const prevBank = d.payment.bank_name;
+              if (masterBanks.includes(prevBank)) {
+                setSelectedBank(prevBank);
+              } else {
+                setSelectedBank('OTHER');
+                setCustomBankName(prevBank);
+              }
+            }
+            if (d.payment.account_holder) setAccountHolder(d.payment.account_holder);
           }
         } else {
-          setFetchError(dataStatus.message || 'Kode reservasi tidak ditemukan.');
+          setFetchError(dataStatus.message || 'Data reservasi tidak ditemukan.');
           setBookingData(null);
         }
 
@@ -111,14 +186,44 @@ function BookingPaymentContent() {
     }
 
     fetchBookingDetails(uploadSuccess);
-  }, [code, uploadSuccess]);
+  }, [token, code, uploadSuccess]);
+
+  // Sinkronkan pilihan bank jika masterBanks selesai dimuat setelah data reservasi
+  useEffect(() => {
+    if (bookingData?.payment?.bank_name) {
+      const prevBank = bookingData.payment.bank_name;
+      if (masterBanks.includes(prevBank)) {
+        setSelectedBank(prevBank);
+      } else {
+        setSelectedBank('OTHER');
+        setCustomBankName(prevBank);
+      }
+    }
+  }, [masterBanks, bookingData]);
 
   const handleSearchCode = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputCode.trim()) return;
-    const trimmed = inputCode.trim().toUpperCase();
-    setCode(trimmed);
-    router.push(`/booking?code=${encodeURIComponent(trimmed)}`);
+    const trimmed = inputCode.trim();
+    if (trimmed.length === 40 && /^[a-f0-9]+$/i.test(trimmed)) {
+      setToken(trimmed);
+      setCode('');
+      router.push(`/booking?token=${encodeURIComponent(trimmed)}`);
+    } else {
+      const upperCode = trimmed.toUpperCase();
+      setCode(upperCode);
+      setToken('');
+      router.push(`/booking?code=${encodeURIComponent(upperCode)}`);
+    }
+  };
+
+  const handleResetSearch = () => {
+    setToken('');
+    setCode('');
+    setInputCode('');
+    setBookingData(null);
+    setFetchError('');
+    router.push('/booking');
   };
 
   const handleCopy = (text: string, type: string) => {
@@ -152,6 +257,11 @@ function BookingPaymentContent() {
     e.preventDefault();
     setUploadError('');
 
+    if (!effectiveBankName) {
+      setUploadError('Mohon pilih atau masukkan nama bank pengirim Anda.');
+      return;
+    }
+
     if (!proofFile) {
       setUploadError('Mohon pilih file foto / PDF bukti transfer.');
       return;
@@ -161,8 +271,11 @@ function BookingPaymentContent() {
 
     try {
       const formData = new FormData();
-      formData.append('booking_code', code);
-      formData.append('bank_name', bankName);
+      if (token) {
+        formData.append('token', token);
+      }
+      formData.append('booking_code', bookingData?.booking_code || code);
+      formData.append('bank_name', effectiveBankName);
       formData.append('account_holder', accountHolder);
       formData.append('transferred_amount', transferredAmount);
       formData.append('proof_image', proofFile);
@@ -186,7 +299,7 @@ function BookingPaymentContent() {
           payment: {
             ...(prev?.payment || {}),
             status: 'pending',
-            bank_name: bankName,
+            bank_name: effectiveBankName,
             account_holder: accountHolder,
             transferred_amount: parseFloat(transferredAmount) || prev?.total_price || 0,
             proof_image_url: uploadedUrl,
@@ -202,8 +315,8 @@ function BookingPaymentContent() {
     }
   };
 
-  // KONDISI 1: Belum ada kode booking yang dimasukkan
-  if (!code) {
+  // KONDISI 1: Belum ada token maupun kode booking yang dimasukkan
+  if (!token && !code) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-6">
@@ -224,7 +337,7 @@ function BookingPaymentContent() {
             Upload Bukti Pembayaran
           </h1>
           <p className="text-sm text-charcoal-800/70 font-light leading-relaxed">
-            Silakan masukkan Kode Reservasi yang Anda dapatkan saat melakukan pemesanan via popup reservasi untuk mengunggah bukti transfer.
+            Silakan masukkan Kode Reservasi atau gunakan tautan aman dari WhatsApp yang Anda terima saat melakukan pemesanan untuk mengunggah bukti transfer.
           </p>
         </div>
 
@@ -237,20 +350,20 @@ function BookingPaymentContent() {
           <form onSubmit={handleSearchCode} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-charcoal-800 uppercase tracking-wider mb-2">
-                Masukkan Kode Reservasi
+                Masukkan Kode Reservasi / Token Pembayaran
               </label>
               <div className="relative">
                 <input
                   type="text"
                   value={inputCode}
                   onChange={(e) => setInputCode(e.target.value)}
-                  placeholder="Contoh: VA-20260915-ABCD"
+                  placeholder="Contoh: CA-20261003-105C atau token dari WhatsApp"
                   className="w-full bg-sand-50 border border-sand-300 rounded-xl px-4 py-3 text-sm font-mono font-bold text-charcoal-900 uppercase focus:outline-none focus:ring-2 focus:ring-gold-500/40"
                   required
                 />
               </div>
               <span className="text-[11px] text-charcoal-800/60 mt-1.5 block">
-                Kode reservasi otomatis diterbitkan setelah reservasi lewat kalender.
+                Kode reservasi atau link upload pembayaran otomatis dikirimkan ke WhatsApp Anda setelah reservasi.
               </span>
             </div>
 
@@ -291,7 +404,7 @@ function BookingPaymentContent() {
     return (
       <div className="max-w-xl mx-auto px-4 py-24 text-center">
         <div className="w-10 h-10 border-4 border-gold-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-sm font-semibold text-charcoal-800/70">Memuat rincian pembayaran untuk kode {code}...</p>
+        <p className="text-sm font-semibold text-charcoal-800/70">Memuat rincian pembayaran...</p>
       </div>
     );
   }
@@ -303,16 +416,12 @@ function BookingPaymentContent() {
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <h2 className="font-serif text-2xl font-bold mb-2">Reservasi Tidak Ditemukan</h2>
         <p className="text-sm text-charcoal-800/70 mb-6">
-          Kode reservasi <strong>{code}</strong> tidak terdaftar dalam sistem kami.
+          {fetchError || 'Data reservasi tidak terdaftar dalam sistem kami.'}
         </p>
         <div className="flex justify-center gap-3">
           <button
             type="button"
-            onClick={() => {
-              setCode('');
-              setInputCode('');
-              router.push('/booking');
-            }}
+            onClick={handleResetSearch}
             className="bg-charcoal-900 text-white px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider"
           >
             Cari Kode Lain
@@ -352,11 +461,7 @@ function BookingPaymentContent() {
 
         <button
           type="button"
-          onClick={() => {
-            setCode('');
-            setInputCode('');
-            router.push('/booking');
-          }}
+          onClick={handleResetSearch}
           className="text-xs text-charcoal-800/60 hover:text-charcoal-900 underline"
         >
           Ganti Kode Reservasi
@@ -687,7 +792,7 @@ function BookingPaymentContent() {
                           <div>
                             <span className="text-charcoal-800/60 block text-[11px]">Bank Pengirim:</span>
                             <span className="font-bold text-charcoal-900">
-                              {bookingData.payment?.bank_name || bankName || 'BCA'}
+                              {bookingData.payment?.bank_name || effectiveBankName || 'BCA'}
                             </span>
                           </div>
                           <div>
@@ -738,14 +843,48 @@ function BookingPaymentContent() {
                     <label className="block text-xs font-bold text-charcoal-800 uppercase tracking-wider mb-1.5">
                       Bank Pengirim Anda
                     </label>
-                    <input
-                      type="text"
-                      value={bankName}
-                      onChange={(e) => setBankName(e.target.value)}
-                      placeholder="Contoh: BCA / Mandiri / BRI"
-                      className="w-full bg-sand-50 border border-sand-300 rounded-xl px-4 py-2.5 text-sm text-charcoal-900 focus:outline-none focus:ring-2 focus:ring-gold-500/40"
-                      required
-                    />
+                    <div className="relative">
+                      <select
+                        value={selectedBank}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSelectedBank(val);
+                          if (val !== 'OTHER') {
+                            setCustomBankName('');
+                          }
+                        }}
+                        className="w-full bg-sand-50 border border-sand-300 rounded-xl px-4 py-2.5 text-sm text-charcoal-900 focus:outline-none focus:ring-2 focus:ring-gold-500/40 appearance-none pr-10 cursor-pointer"
+                        required
+                      >
+                        {masterBanks.map((bName) => (
+                          <option key={bName} value={bName}>
+                            {bName}
+                          </option>
+                        ))}
+                        <option value="OTHER">Bank Lainnya (Input Manual)...</option>
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-charcoal-600">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {selectedBank === 'OTHER' && (
+                      <div className="mt-2.5 animate-in fade-in duration-200">
+                        <label className="block text-[11px] font-semibold text-charcoal-700 uppercase tracking-wider mb-1">
+                          Nama Bank Lainnya
+                        </label>
+                        <input
+                          type="text"
+                          value={customBankName}
+                          onChange={(e) => setCustomBankName(e.target.value)}
+                          placeholder="Masukkan nama bank Anda (cth: Bank Sumut, Bank BJB Syariah)"
+                          className="w-full bg-white border border-sand-300 rounded-xl px-4 py-2 text-sm text-charcoal-900 focus:outline-none focus:ring-2 focus:ring-gold-500/40"
+                          required={selectedBank === 'OTHER'}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -832,14 +971,14 @@ function BookingPaymentContent() {
                 Bukti Pembayaran Berhasil Diunggah!
               </h3>
               <p className="text-xs text-charcoal-800/70 mt-2 leading-relaxed">
-                Terima kasih! Bukti transfer untuk reservasi <strong>{code}</strong> telah kami terima. Tim manajemen kami akan segera memverifikasi mutasi bank Anda dalam waktu maksimal 2 jam kerja.
+                Terima kasih! Bukti transfer untuk reservasi <strong>{bookingData?.booking_code || code}</strong> telah kami terima. Tim manajemen kami akan segera memverifikasi mutasi bank Anda dalam waktu maksimal 2 jam kerja.
               </p>
             </div>
 
             <div className="p-3.5 bg-sand-50 rounded-xl border border-sand-300 text-left text-xs space-y-1.5">
               <div className="flex justify-between">
                 <span className="text-charcoal-800/60">Bank Pengirim:</span>
-                <span className="font-bold text-charcoal-900">{bankName || '-'}</span>
+                <span className="font-bold text-charcoal-900">{effectiveBankName || '-'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-charcoal-800/60">Atas Nama:</span>
@@ -857,7 +996,7 @@ function BookingPaymentContent() {
 
             <div className="space-y-2 pt-2">
               <Link
-                href={`/cek-booking?code=${encodeURIComponent(code)}`}
+                href={`/cek-booking?code=${encodeURIComponent(bookingData?.booking_code || code)}`}
                 className="w-full py-3 px-4 rounded-xl font-bold text-xs bg-gold-600 hover:bg-gold-700 text-white shadow-sm transition-all flex items-center justify-center gap-2 group"
               >
                 <span>Pantau Status di Cek Booking</span>

@@ -158,6 +158,7 @@ export default function OnlineBookingModal({
 
   // Success Feedback State
   const [bookingSuccessCode, setBookingSuccessCode] = useState<string | null>(null);
+  const [bookingSuccessToken, setBookingSuccessToken] = useState<string | null>(null);
   const [countdownRedirect, setCountdownRedirect] = useState<number>(4);
   const [isCopiedCode, setIsCopiedCode] = useState<boolean>(false);
 
@@ -219,14 +220,17 @@ export default function OnlineBookingModal({
         if (prev <= 1) {
           clearInterval(timer);
           triggerClose();
-          router.push(`/booking?code=${bookingSuccessCode}`);
+          const targetUrl = bookingSuccessToken
+            ? `/booking?token=${encodeURIComponent(bookingSuccessToken)}`
+            : `/booking?code=${encodeURIComponent(bookingSuccessCode)}`;
+          router.push(targetUrl);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [bookingSuccessCode, triggerClose, router]);
+  }, [bookingSuccessCode, bookingSuccessToken, triggerClose, router]);
 
   // Close on Escape key
   useEffect(() => {
@@ -553,6 +557,7 @@ export default function OnlineBookingModal({
 
       if (result.success && result.data?.booking_code) {
         setBookingSuccessCode(result.data.booking_code);
+        setBookingSuccessToken(result.data.payment_token || null);
         setCountdownRedirect(4);
       } else {
         setAlertMessage(result.message || 'Gagal memproses reservasi. Silakan periksa kembali data Anda.');
@@ -637,7 +642,10 @@ export default function OnlineBookingModal({
                 type="button"
                 onClick={() => {
                   triggerClose();
-                  router.push(`/booking?code=${bookingSuccessCode}`);
+                  const targetUrl = bookingSuccessToken
+                    ? `/booking?token=${encodeURIComponent(bookingSuccessToken)}`
+                    : `/booking?code=${encodeURIComponent(bookingSuccessCode || '')}`;
+                  router.push(targetUrl);
                 }}
                 className="w-full py-3.5 px-6 rounded-xl font-bold text-xs uppercase tracking-wider bg-gold-600 hover:bg-gold-700 text-white shadow-md transition-all flex items-center justify-center gap-2 group"
               >
