@@ -1118,26 +1118,33 @@ export default function OnlineBookingModal({
                     <Clock className="w-3.5 h-3.5" />
                     <span>Ketentuan &amp; Cara Booking</span>
                   </div>
-                  <ul className="space-y-1.5 pl-3 list-disc text-white/70 text-[10.5px] leading-relaxed">
-                    {(villa.booking_instructions ||
-                      'Pembayaran DP sebesar Rp 1.000.000 / malam untuk mengunci tanggal menginap.\nSetelah DP diterima, tanggal langsung kami booked dan invoice resmi dikirimkan paling lambat 1 x 24 jam.\nPembatalan tidak dapat dilakukan (non-refundable), namun boleh reschedule maksimal 1x (diinformasikan maksimal 10 hari sebelumnya / H-10).\nBantuan & info ketersediaan: 0813-8266-7801 / 0816-4819-298.'
-                    )
-                      .split('\n')
-                      .map((p) => p.trim().replace(/^[-•*]\s*/, ''))
-                      .filter(Boolean)
-                      .map((point, idx) => {
-                        const colonIndex = point.indexOf(':');
-                        if (colonIndex > 0 && colonIndex <= 35 && !point.slice(0, colonIndex).includes('http')) {
-                          return (
-                            <li key={idx}>
-                              <strong className="text-white">{point.slice(0, colonIndex)}:</strong>
-                              {point.slice(colonIndex + 1)}
-                            </li>
-                          );
-                        }
-                        return <li key={idx}>{point}</li>;
-                      })}
-                  </ul>
+                  {/<[a-z][\s\S]*>/i.test(villa.booking_instructions || '') ? (
+                    <div
+                      className="wysiwyg-instructions text-white/80 text-[10.5px] leading-relaxed space-y-1.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:space-y-1 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:space-y-1 [&_li]:text-white/70 [&_strong]:text-white [&_p]:mb-1 [&_a]:text-gold-400 [&_a]:underline"
+                      dangerouslySetInnerHTML={{ __html: villa.booking_instructions || '' }}
+                    />
+                  ) : (
+                    <ul className="space-y-1.5 pl-3 list-disc text-white/70 text-[10.5px] leading-relaxed">
+                      {(villa.booking_instructions ||
+                        'Pembayaran DP sebesar Rp 1.000.000 / malam untuk mengunci tanggal menginap.\nSetelah DP diterima, tanggal langsung kami booked dan invoice resmi dikirimkan paling lambat 1 x 24 jam.\nPembatalan tidak dapat dilakukan (non-refundable), namun boleh reschedule maksimal 1x (diinformasikan maksimal 10 hari sebelumnya / H-10).\nBantuan & info ketersediaan: 0813-8266-7801 / 0816-4819-298.'
+                      )
+                        .split('\n')
+                        .map((p) => p.trim().replace(/^[-•*]\s*/, ''))
+                        .filter(Boolean)
+                        .map((point, idx) => {
+                          const colonIndex = point.indexOf(':');
+                          if (colonIndex > 0 && colonIndex <= 35 && !point.slice(0, colonIndex).includes('http')) {
+                            return (
+                              <li key={idx}>
+                                <strong className="text-white">{point.slice(0, colonIndex)}:</strong>
+                                {point.slice(colonIndex + 1)}
+                              </li>
+                            );
+                          }
+                          return <li key={idx}>{point}</li>;
+                        })}
+                    </ul>
+                  )}
                   <div className="pt-1.5 border-t border-white/10 text-right">
                     <Link
                       href="/tata-tertib"

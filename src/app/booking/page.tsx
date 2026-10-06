@@ -893,26 +893,33 @@ function BookingPaymentContent() {
                   <span>✦</span>
                   <span>Ketentuan &amp; Cara Booking</span>
                 </div>
-                <ul className="space-y-2 text-white/80 text-xs leading-relaxed list-disc pl-4">
-                  {(villa.booking_instructions ||
-                    'Pembayaran DP: Sebesar Rp 1.000.000 / malam untuk mengunci tanggal menginap.\nKonfirmasi & Invoice: Setelah DP kami terima, tanggal langsung kami booked dan invoice resmi dikirimkan paling lambat 1 x 24 jam.\nKebijakan Reschedule: Apabila sudah melakukan pembayaran, tidak dapat melakukan pembatalan (non-refundable) namun boleh mengubah tanggal menginap (reschedule) sebanyak maksimal 1x.\nBatas Waktu Reschedule: Reschedule wajib diinformasikan maksimal 10 hari sebelumnya (H-10).\nBantuan & Reservasi: Silakan hubungi nomor WhatsApp resmi kami.'
-                  )
-                    .split('\n')
-                    .map((p) => p.trim().replace(/^[-•*]\s*/, ''))
-                    .filter(Boolean)
-                    .map((point, idx) => {
-                      const colonIndex = point.indexOf(':');
-                      if (colonIndex > 0 && colonIndex <= 35 && !point.slice(0, colonIndex).includes('http')) {
-                        return (
-                          <li key={idx}>
-                            <strong className="text-white">{point.slice(0, colonIndex)}:</strong>
-                            {point.slice(colonIndex + 1)}
-                          </li>
-                        );
-                      }
-                      return <li key={idx}>{point}</li>;
-                    })}
-                </ul>
+                {/<[a-z][\s\S]*>/i.test(villa.booking_instructions || '') ? (
+                  <div
+                    className="wysiwyg-instructions text-white/80 text-xs leading-relaxed space-y-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_li]:text-white/80 [&_strong]:text-white [&_p]:mb-1.5 [&_a]:text-gold-400 [&_a]:underline"
+                    dangerouslySetInnerHTML={{ __html: villa.booking_instructions || '' }}
+                  />
+                ) : (
+                  <ul className="space-y-2 text-white/80 text-xs leading-relaxed list-disc pl-4">
+                    {(villa.booking_instructions ||
+                      'Pembayaran DP: Sebesar Rp 1.000.000 / malam untuk mengunci tanggal menginap.\nKonfirmasi & Invoice: Setelah DP kami terima, tanggal langsung kami booked dan invoice resmi dikirimkan paling lambat 1 x 24 jam.\nKebijakan Reschedule: Apabila sudah melakukan pembayaran, tidak dapat melakukan pembatalan (non-refundable) namun boleh mengubah tanggal menginap (reschedule) sebanyak maksimal 1x.\nBatas Waktu Reschedule: Reschedule wajib diinformasikan maksimal 10 hari sebelumnya (H-10).\nBantuan & Reservasi: Silakan hubungi nomor WhatsApp resmi kami.'
+                    )
+                      .split('\n')
+                      .map((p) => p.trim().replace(/^[-•*]\s*/, ''))
+                      .filter(Boolean)
+                      .map((point, idx) => {
+                        const colonIndex = point.indexOf(':');
+                        if (colonIndex > 0 && colonIndex <= 35 && !point.slice(0, colonIndex).includes('http')) {
+                          return (
+                            <li key={idx}>
+                              <strong className="text-white">{point.slice(0, colonIndex)}:</strong>
+                              {point.slice(colonIndex + 1)}
+                            </li>
+                          );
+                        }
+                        return <li key={idx}>{point}</li>;
+                      })}
+                  </ul>
+                )}
                 <div className="pt-2 border-t border-white/10 flex items-center justify-between">
                   <span className="text-[11px] text-white/50">Aturan resmi villa</span>
                   <Link
