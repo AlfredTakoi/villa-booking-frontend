@@ -250,19 +250,19 @@ function BookingPaymentContent() {
     let deadlineDate: Date | null = null;
     const expiryHours = Number(bookingData.payment_expiry_hours || villa.payment_expiry_hours || 24);
 
-    // Prioritaskan perhitungan dinamis dari created_at + expiryHours terkini
-    if (bookingData.created_at && expiryHours > 0) {
+    // Prioritaskan deadline ISO / deadline string presisi (jam & menit) dari backend
+    if (bookingData.payment_deadline_iso) {
+      deadlineDate = new Date(bookingData.payment_deadline_iso);
+    } else if (bookingData.payment_deadline) {
+      deadlineDate = new Date(bookingData.payment_deadline.replace(' ', 'T'));
+    } else if (bookingData.created_at) {
       const createdTs = new Date(bookingData.created_at.replace(' ', 'T')).getTime();
-      if (!isNaN(createdTs)) {
-        deadlineDate = new Date(createdTs + expiryHours * 3600 * 1000);
-      }
-    }
-
-    if (!deadlineDate || isNaN(deadlineDate.getTime())) {
-      if (bookingData.payment_deadline_iso) {
-        deadlineDate = new Date(bookingData.payment_deadline_iso);
-      } else if (bookingData.payment_deadline) {
-        deadlineDate = new Date(bookingData.payment_deadline.replace(' ', 'T'));
+      const totalMinutes = Number(
+        bookingData.total_payment_expiry_minutes ||
+        ((bookingData.payment_expiry_hours || villa.payment_expiry_hours || 24) * 60)
+      );
+      if (!isNaN(createdTs) && totalMinutes > 0) {
+        deadlineDate = new Date(createdTs + totalMinutes * 60 * 1000);
       }
     }
 
@@ -760,7 +760,7 @@ function BookingPaymentContent() {
                         {timeLeft.isExpired ? 'Waktu Pembayaran Berakhir' : 'Batas Waktu Pembayaran'}
                       </span>
                       <span className="text-[11px] opacity-75">
-                        {bookingData.payment_expiry_hours || villa.payment_expiry_hours || 24} Jam sejak pemesanan
+                        {bookingData.payment_expiry_text || (bookingData.payment_expiry_hours ? `${bookingData.payment_expiry_hours} Jam` : '24 Jam')} sejak pemesanan
                       </span>
                     </div>
                     <p className="text-xs mt-1 opacity-90">
