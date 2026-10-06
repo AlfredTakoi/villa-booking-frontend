@@ -532,6 +532,13 @@ export default function OnlineBookingModal({
     setIsSubmitting(true);
 
     try {
+      const cleanPhoneDigits = guestPhone.trim().replace(/\D/g, '');
+      const normalizedGuestPhone = cleanPhoneDigits.startsWith('62')
+        ? cleanPhoneDigits
+        : cleanPhoneDigits.startsWith('0')
+          ? `62${cleanPhoneDigits.slice(1)}`
+          : `62${cleanPhoneDigits}`;
+
       const res = await fetch(buildApiUrl('/api/bookings'), {
         method: 'POST',
         headers: {
@@ -543,7 +550,7 @@ export default function OnlineBookingModal({
           total_guests: totalGuests,
           guest_name: guestName.trim(),
           guest_email: guestEmail.trim(),
-          guest_phone: guestPhone.trim(),
+          guest_phone: normalizedGuestPhone,
           notes: notes.trim(),
           event_type: eventType,
           event_type_other: eventTypeOther.trim(),
